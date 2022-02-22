@@ -172,13 +172,13 @@ func DropFileData(path string) (string, int, int) {
 
 	count := 0
 	for _, line := range text {
-		if count == 7 {
+		if count == 6 {
 			dropAlias = line
 		}
-		if count == 9 {
+		if count == 8 {
 			dropTimeLeft = line
 		}
-		if count == 10 {
+		if count == 11 {
 			dropEmulation = line
 		}
 

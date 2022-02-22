@@ -1,4 +1,4 @@
-# godoors
+# GoDoors for 'old skool' BBSs
 
 Helpful BBS "door" library in GO for creating linux-based applications (like games and utilities) that utilize STDIN and STDOUT, connected over a terminal program like [SyncTerm](https://syncterm.bbsdev.net/), [MagiTerm](https://gitlab.com/magickabbs/MagiTerm), [NetRunner](http://mysticbbs.com/downloads.html) or [IGTerm](https://www.phenomprod.com/).
 
@@ -18,7 +18,6 @@ import (
 
 ## General functions
 
-***
 
 ### DROP FILES
 
