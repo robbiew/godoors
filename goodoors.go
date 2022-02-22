@@ -13,13 +13,25 @@ import (
 	"unicode/utf8"
 )
 
-// CREDIT TO https://github.com/k0kubun/go-ansi for some of these sequences,
+// CREDIT TO https://github.com/k0kubun/go-ansi for some of these sequences.
 
 // Common fragments of escape sequences
 const (
 	Esc = "\u001B["
 	Osc = "\u001B]"
 	Bel = "\u0007"
+)
+
+// Common fonts, supported by SyncTerm
+const (
+	Mosoul          = Esc + "0;38 D"
+	Potnoodle       = Esc + "0;37 D"
+	Microknight     = Esc + "0;41 D"
+	Microknightplus = Esc + "0;39 D"
+	Topaz           = Esc + "0;42 D"
+	Topazplus       = Esc + "0;40 D"
+	Ibm             = Esc + "0;0 D"
+	Ibmthin         = Esc + "0;26 D"
 )
 
 // Common ANSI escapes sequences. These should be used when the desired action

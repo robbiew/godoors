@@ -9,6 +9,13 @@ If you're not already running BBS software like Talisman, Mystic, Synchronet, En
 go get github.com/robbiew/godoors
 ```
 
+## Usage
+```go
+import (
+    gd "github.com/robbiew/godoors"
+)
+```
+
 ## General functions
 
 ***
@@ -16,7 +23,7 @@ go get github.com/robbiew/godoors
 ### DROP FILES
 
 ```go 
-godoors.DropFileData(path string) (string, int, int)
+gd.DropFileData(path string) (string, int, int)
 ```
 
 > Pass the path of the Door32.sys BBS drop file (including trailing slash), and itll return HANDLE/ALIAS, TIME LEFT (in minutes) and EMULATION TYPE (0 = Ascii, 1 = Ansi). You'll probably want to do this using a "startDoor.sh" file or from your BBS menu command (e.g. /path/to/drop/$NODE/Door32.sys/).
@@ -25,7 +32,7 @@ godoors.DropFileData(path string) (string, int, int)
  
 ### TERMINAL HEIGHT AND WIDTH
 ```go
-godoors.GetTermSize() (int, int)
+gd.GetTermSize() (int, int)
 ```
 
 > Tries to detect the user's terminal size. Returns HEIGHT and WIDTH. If it can't detect, it'll default to 25 and 80.
@@ -33,7 +40,7 @@ godoors.GetTermSize() (int, int)
 ***
 ### DISPLAY ANSI ART
 ```go
-godoors.PrintAnsi(file string)
+gd.PrintAnsi(file string)
 ```
 
 > Pass the path of a valid ANSI art file and it'll strip the SAUCE record, then print line by line.
@@ -41,7 +48,7 @@ godoors.PrintAnsi(file string)
 ***
 ### DISPLAY ART AT X,Y COORDINATES
 ```go
-godoors.PrintAnsiLoc(file string, x int, y int)
+gd.PrintAnsiLoc(file string, x int, y int)
 ```
 
 > Same as above, only it'll print the art to the screen at X/Y coordinates, incrementing the Y position after every line.
@@ -52,74 +59,111 @@ godoors.PrintAnsiLoc(file string, x int, y int)
 
 ```go
 // Move the cursor n cells to up.
-func CursorUp(n int) 
+gd.CursorUp(n int) 
 
 // Move the cursor n cells to down.
-func CursorDown(n int) 
+gd.CursorDown(n int) 
 
 // Move the cursor n cells to right.
-func CursorForward(n int) 
+gd.CursorForward(n int) 
 
 // Move the cursor n cells to left.
-func CursorBack(n int) 
+gd.CursorBack(n int) 
 
 // Move cursor to beginning of the line n lines down.
-func CursorNextLine(n int) 
+gd.CursorNextLine(n int) 
 
 // Move cursor to beginning of the line n lines up.
-func CursorPreviousLine(n int) 
+gd.CursorPreviousLine(n int) 
 
 // Move cursor horizontally to x.
-func CursorHorizontalAbsolute(x int) 
+gd.CursorHorizontalAbsolute(x int) 
 
 // Show the cursor.
-func CursorShow() 
+gd.CursorShow() 
 
 // Hide the cursor.
-func CursorHide()
+gd.CursorHide()
 ```
 ***
 ## Color
 ```go
-// Text color  -- e.g. fmt.Println(godoors.Yellow)
-Black         
-Red          
-Green         
-Yellow     
-Blue        
-Magenta      
-Cyan         
-White         
-BrightBlack   
-BrightRed    
-BrightGreen   
-BrightYellow  
-BrightBlue    
-BrightMagenta 
-BrightCyan    
-BrightWhite   
+// Text colors supported by BBS term programs
+// usage: fmt.Println(gd.Yellow)
+gd.Black         
+gd.Red          
+gd.Green         
+gd.Yellow     
+gd.Blue        
+gd.Magenta      
+gd.Cyan         
+gd.White         
+gd.BrightBlack   
+gd.BrightRed    
+gd.BrightGreen   
+gd.BrightYellow  
+gd.BrightBlue    
+gd.BrightMagenta 
+gd.BrightCyan    
+gd.BrightWhite   
 
 // Background colors
-BgBlack        
-BgRed          
-BgGreen        
-BgYellow       
-BgBlue          
-BgMagenta       
-BgCyan          
-BgWhite         
-BgBrightBlack   
-BgBrightRed     
-BgBrightGreen   
-BgBrightYellow  
-BgBrightBlue    
-BgBrightMagenta 
-BgBrightCyan    
-BgBrightWhite   
+gd.BgBlack        
+gd.BgRed          
+gd.BgGreen        
+gd.BgYellow       
+gd.gd.BgBlue          
+gd.BgMagenta       
+gd.BgCyan          
+gd.BgWhite         
+gd.BgBrightBlack   
+gd.BgBrightRed     
+gd.BgBrightGreen   
+gd.BgBrightYellow  
+gd.BgBrightBlue    
+gd.BgBrightMagenta 
+gd.BgBrightCyan    
+gd.BgBrightWhite   
 
 // Reset to default colors
-ColorReset 
+gd.ColorReset 
 ```
 ***
+### FONTS
+```go
+// Supported by SyncTerm
+// usage: fmt.Println(gd.Topaz)
+gd.Mosoul        
+gd.Potnoodle     
+gd.Microknight    
+gd.Microknightplus 
+gd.Topaz          
+gd.Topazplus      
+gd.Ibm 
+gd.Ibmthin         
+```
+
+***
+
 ### MISC
 See ```godoors.go``` for other misc. functions.
+
+## TO-DO
+- Time-out if no key press in X mins
+- Pop-up style window
+- Pause sequence (press any key to continue)
+- Confirm Y/m prompt
+- Get single key press from keyboard
+- Get text input, max X characters
+- Countdown timer example
+- Write user data to text file
+- Create a leader or score board
+- Write user data to sqlite file
+- Retrive/parse/display JSON data from the Internet
+- Retrieve an ANSI file from the internet and display
+- Add entry to end of log file
+- Tidy on exit
+- Save & Restore cursor position
+- Create a scrollable/selectable list of things
+- ANSI art file manipulation (scroll up/down, left/right)
+- SIXEL support!
