@@ -1,8 +1,8 @@
 # godoors
 
-Helpful BBS "door" library in GO for creating linux-based applications (like games and utilities) that utilize STDIN and STDOUT, connected over a terminal program like SyncTerm, MagiTerm, NetRunner or IGterm.
+Helpful BBS "door" library in GO for creating linux-based applications (like games and utilities) that utilize STDIN and STDOUT, connected over a terminal program like [SyncTerm](https://syncterm.bbsdev.net/), [MagiTerm](https://gitlab.com/magickabbs/MagiTerm), [NetRunner](http://mysticbbs.com/downloads.html) or [IGTerm](https://www.phenomprod.com/).
 
-If you're not already running BBS software like Talisman, Mystic, Synchronet, Enigma 1/2 or WWIV (on linux), then this library probably isn't for you.
+If you're not already running linux-based BBS software like [Talisman](https://talismanbbs.com/), [Mystic](http://mysticbbs.com/downloads.html), [Synchronet](https://wiki.synchro.net/install:nix), [ENiGMA½](https://enigma-bbs.github.io/) or [WWIV](https://github.com/wwivbbs/wwiv), then this library probably isn't for you.
 
 ## Install
 ```go
