@@ -159,7 +159,7 @@ See ```godoors.go``` for other misc. functions.
 - Write user data to text file
 - Create a leader or score board
 - Write user data to sqlite file
-- Retrive/parse/display JSON data from the Internet
+- Retrive/parse/display JSON data from the Internet APIs (16 colors, news, weather, etc.)
 - Retrieve an ANSI file from the internet and display
 - Add entry to end of log file
 - Tidy on exit
