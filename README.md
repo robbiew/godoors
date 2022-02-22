@@ -26,7 +26,7 @@ import (
 gd.DropFileData(path string) (string, int, int)
 ```
 
-> Pass the path of the Door32.sys BBS drop file (including trailing slash), and itll return HANDLE/ALIAS, TIME LEFT (in minutes) and EMULATION TYPE (0 = Ascii, 1 = Ansi). You'll probably want to do this using a "startDoor.sh" file or from your BBS menu command (e.g. /path/to/drop/$NODE/Door32.sys/).
+> Pass the path of the Door32.sys BBS drop file (including trailing slash), and it will return HANDLE/ALIAS, TIME LEFT (in minutes) and EMULATION TYPE (0 = Ascii, 1 = Ansi). You'll probably want to do this using a "startDoor.sh" file or from your BBS menu command (e.g. /path/to/drop/$NODE/Door32.sys).
 
 ***
  
@@ -35,7 +35,7 @@ gd.DropFileData(path string) (string, int, int)
 gd.GetTermSize() (int, int)
 ```
 
-> Tries to detect the user's terminal size. Returns HEIGHT and WIDTH. If it can't detect, it'll default to 25 and 80.
+> Tries to detect the user's terminal size. Returns HEIGHT and WIDTH. If it can't detect it, it'll default to 25 and 80.
 
 ***
 ### DISPLAY ANSI ART
@@ -43,7 +43,7 @@ gd.GetTermSize() (int, int)
 gd.PrintAnsi(file string)
 ```
 
-> Pass the path of a valid ANSI art file and it'll strip the SAUCE record, then print line by line.
+> Pass the valid path of an ANSI art file and it'll strip the SAUCE record, then print it line by line, with an optional delay to simulate slower speeds.
 
 ***
 ### DISPLAY ART AT X,Y COORDINATES
@@ -51,7 +51,7 @@ gd.PrintAnsi(file string)
 gd.PrintAnsiLoc(file string, x int, y int)
 ```
 
-> Same as above, only it'll print the art to the screen at X/Y coordinates, incrementing the Y position after every line.
+> Same as above, only it'll print the art to the screen at X/Y coordinates, incrementing the Y position after every line. Handy of you need to update the screen with art in a particular location without clearing and re-writing everything.
 
 ***
 
