@@ -1,6 +1,8 @@
 # godoors
 
-Helpful BBS "door" library in GO for creating linux-based applications that run over STDIO. If you're not already running BBS software like Talisman, Mystic, Synchronet, Enigma 1/2 or WWIV on linux, this library probably isn't for you.
+Helpful BBS "door" library in GO for creating linux-based applications that run over STDIO, using a terminal program like SyncTerm, MagiTerm, NetRunner or IGterm.
+
+If you're not already running BBS software like Talisman, Mystic, Synchronet, Enigma 1/2 or WWIV (on linux), then this library probably isn't for you.
 
 ## Install
 ```go
