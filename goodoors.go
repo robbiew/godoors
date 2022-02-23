@@ -105,6 +105,13 @@ const (
 
 func Pause() {
 
+	if err := keyboard.Open(); err != nil {
+		fmt.Println(err)
+	}
+	defer func() {
+		_ = keyboard.Close()
+	}()
+
 	fmt.Fprintf(os.Stdout, "\r\nPrEsS a KeY")
 	char, _, err := keyboard.GetSingleKey()
 	if err != nil {
