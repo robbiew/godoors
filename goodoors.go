@@ -103,6 +103,10 @@ const (
 	ColorReset = Esc + "0m"
 )
 
+func Modal() {
+
+}
+
 func Pause() {
 
 	fmt.Fprintf(os.Stdout, "\r\nPrEsS a KeY")
@@ -126,47 +130,57 @@ func ClearScreen() {
 
 // Move the cursor n cells to up.
 func CursorUp(n int) {
-	fmt.Printf("\x1b[%dA", n)
+	fmt.Printf(Esc+"%dA", n)
 }
 
 // Move the cursor n cells to down.
 func CursorDown(n int) {
-	fmt.Printf("\x1b[%dB", n)
+	fmt.Printf(Esc+"%dB", n)
 }
 
 // Move the cursor n cells to right.
 func CursorForward(n int) {
-	fmt.Printf("\x1b[%dC", n)
+	fmt.Printf(Esc+"%dC", n)
 }
 
 // Move the cursor n cells to left.
 func CursorBack(n int) {
-	fmt.Printf("\x1b[%dD", n)
+	fmt.Printf(Esc+"%dD", n)
 }
 
 // Move cursor to beginning of the line n lines down.
 func CursorNextLine(n int) {
-	fmt.Printf("\x1b[%dE", n)
+	fmt.Printf(Esc+"%dE", n)
 }
 
 // Move cursor to beginning of the line n lines up.
 func CursorPreviousLine(n int) {
-	fmt.Printf("\x1b[%dF", n)
+	fmt.Printf(Esc+"%dF", n)
 }
 
 // Move cursor horizontally to x.
 func CursorHorizontalAbsolute(x int) {
-	fmt.Printf("\x1b[%dG", x)
+	fmt.Printf(Esc+"%dG", x)
 }
 
 // Show the cursor.
 func CursorShow() {
-	fmt.Print("\x1b[?25h")
+	fmt.Print(Esc + "?25h")
 }
 
 // Hide the cursor.
 func CursorHide() {
-	fmt.Print("\x1b[?25l")
+	fmt.Print(Esc + "?25l")
+}
+
+func SaveScreen() {
+	fmt.Print(Esc + "?47h")
+
+}
+
+func RestoreScreen() {
+	fmt.Print(Esc + "?47l")
+
 }
 
 func DropFileData(path string) (string, int, int) {
