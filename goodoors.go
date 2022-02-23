@@ -98,9 +98,12 @@ const (
 	BackgroundColorBrightWhite   = Esc + "47;1m"
 
 	ColorReset = Esc + "0m"
-
-	ClearScreen = "\u001Bc"
 )
+
+// Erase the screen
+func ClearScreen() {
+	fmt.Println(EraseScreen)
+}
 
 // Move the cursor n cells to up.
 func CursorUp(n int) {
