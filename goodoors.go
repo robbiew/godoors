@@ -115,8 +115,9 @@ const (
 	ColorReset = Esc + "0m"
 )
 
-func Modal() {
-
+func Modal(text string, w int, h int) {
+	SaveScreen()
+	AbsCenterText(text, w, h)
 }
 
 func TruncateText(s string, max int) string {
@@ -132,8 +133,8 @@ func TruncateText(s string, max int) string {
 	return s
 }
 
+// Wait for a key press
 func Pause() {
-
 	fmt.Fprintf(os.Stdout, "\r\nPrEsS a KeY")
 	_, _, err := keyboard.GetKey()
 	if err != nil {
@@ -141,6 +142,7 @@ func Pause() {
 	}
 }
 
+// Move cursor to X, Y location
 func MoveCursor(x int, y int) {
 	fmt.Printf(Esc+"%d;%df", y, x)
 }
@@ -207,9 +209,7 @@ func RestoreScreen() {
 }
 
 func DropFileData(path string) (string, int, int) {
-
-	// path needs to include trailing slash
-
+	// path needs to include trailing slash!
 	var dropAlias string
 	var dropTimeLeft string
 	var dropEmulation string
@@ -261,20 +261,16 @@ func DropFileData(path string) (string, int, int) {
 	}
 
 	return dropAlias, timeInt, emuInt
-
 }
 
+/*
+	Get the terminal size
+	- Send a cursor position that we know is way too large
+	- Terminal sends back the largest row + col size
+	- Read in the result
+*/
 func GetTermSize() (int, int) {
-
-	/*
-		Get the terminal size
-		- Send a cursor position that we know is way too large
-		- Terminal sends back the largest row + col size
-		- Read in the result
-	*/
-
 	// Set the terminal to raw mode so we aren't waiting for CLRF rom user (to be undone with `-raw`)
-
 	rawMode := exec.Command("/bin/stty", "raw")
 	rawMode.Stdin = os.Stdin
 	_ = rawMode.Run()
@@ -369,7 +365,6 @@ func TrimLastChar(s string) string {
 }
 
 func PrintAnsiLoc(file string, x int, y int) {
-
 	yLoc := y
 	content, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -394,5 +389,12 @@ func PrintStringLoc(text string, x int, y int) {
 
 // Horizontally center some text.
 func CenterText(s string, w int) string {
+	return fmt.Sprintf("%[1]*s", -w, fmt.Sprintf("%[1]*s", (w+len(s))/2, s))
+}
+
+// Horizontally and Vertically center some text.
+func AbsCenterText(s string, w int, h int) string {
+	yCenter := h / 2
+	MoveCursor(0, yCenter)
 	return fmt.Sprintf("%[1]*s", -w, fmt.Sprintf("%[1]*s", (w+len(s))/2, s))
 }

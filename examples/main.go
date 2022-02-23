@@ -69,30 +69,29 @@ func main() {
 			panic(err)
 		}
 
-		gd.ClearScreen()
-
 		if string(char) == "q" || string(char) == "Q" || key == keyboard.KeyEsc {
 			break
 		}
 		if string(char) == "a" || string(char) == "A" {
+			gd.ClearScreen()
 			fmt.Println("\r\nART TEST:")
 			gd.PrintAnsi("mx-sm.ans", 40)
 		}
 		if string(char) == "c" || string(char) == "C" {
-
 			fmt.Println("\r\nCOLOR TEST:")
+			gd.ClearScreen()
 			fmt.Println(gd.BackgroundColorBlue + gd.TextColorWhite + " White Text on Blue " + gd.ColorReset)
 			fmt.Println(gd.BackgroundColorRed + gd.TextColorBrightRed + " Red Text on Bright Red " + gd.ColorReset)
 		}
 		if string(char) == "d" || string(char) == "D" {
-
+			gd.ClearScreen()
 			fmt.Println("\r\nDROP FILE:")
 			fmt.Println("Alias: " + dropAlias)
 			fmt.Fprintf(os.Stdout, "Emulation: %v\r\n", emuName)
 			fmt.Fprintf(os.Stdout, "Time Left: %v\r\n", timeInt)
 		}
 		if string(char) == "f" || string(char) == "F" {
-
+			gd.ClearScreen()
 			fmt.Println("\r\nFONT TEST (SyncTerm):")
 			fmt.Println(gd.Topaz + "Topaz")
 			fmt.Println(gd.Mosoul + "Mosoul")
@@ -100,12 +99,11 @@ func main() {
 		}
 		if string(char) == "m" || string(char) == "M" {
 			gd.SaveScreen()
-
-			fmt.Println("\r\nFONT TEST (SyncTerm):")
-
+			fmt.Println("\r\nMODAL TEST (SyncTerm):")
+			gd.Modal("This is a test", 14, h)
 		}
 		if string(char) == "t" || string(char) == "T" {
-
+			gd.ClearScreen()
 			fmt.Println("\r\nTERMINAL SIZE DETECT:")
 			fmt.Fprintf(os.Stdout, "Height: %v\r\n", h)
 			fmt.Fprintf(os.Stdout, "Width: %v\r\n", w)
