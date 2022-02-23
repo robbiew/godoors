@@ -23,7 +23,6 @@ func main() {
 			// or possibly use `log.Fatalf` instead of:
 			fmt.Fprintf(os.Stderr, "missing path to door32.sys directory: -%s \n", req)
 			os.Exit(2) // the same exit code flag.Parse uses
-
 		}
 	}
 
@@ -76,12 +75,14 @@ func main() {
 			gd.ClearScreen()
 			fmt.Println("\r\nART TEST:")
 			gd.PrintAnsi("mx-sm.ans", 40)
+			gd.Pause()
 		}
 		if string(char) == "c" || string(char) == "C" {
 			fmt.Println("\r\nCOLOR TEST:")
 			gd.ClearScreen()
 			fmt.Println(gd.BackgroundColorBlue + gd.TextColorWhite + " White Text on Blue " + gd.ColorReset)
 			fmt.Println(gd.BackgroundColorRed + gd.TextColorBrightRed + " Red Text on Bright Red " + gd.ColorReset)
+			gd.Pause()
 		}
 		if string(char) == "d" || string(char) == "D" {
 			gd.ClearScreen()
@@ -89,6 +90,7 @@ func main() {
 			fmt.Println("Alias: " + dropAlias)
 			fmt.Fprintf(os.Stdout, "Emulation: %v\r\n", emuName)
 			fmt.Fprintf(os.Stdout, "Time Left: %v\r\n", timeInt)
+			gd.Pause()
 		}
 		if string(char) == "f" || string(char) == "F" {
 			gd.ClearScreen()
@@ -96,21 +98,21 @@ func main() {
 			fmt.Println(gd.Topaz + "Topaz")
 			fmt.Println(gd.Mosoul + "Mosoul")
 			fmt.Println(gd.Ibm + "IBM CP437")
+			gd.Pause()
 		}
 		if string(char) == "m" || string(char) == "M" {
-			gd.SaveScreen()
-			fmt.Println("\r\nMODAL TEST:")
-			gd.Modal("This is a test", 14, h)
+			mText := "Continue? Y/n"
+			mLen := len(mText)
+			gd.Modal(mText, mLen, w, h)
 		}
 		if string(char) == "t" || string(char) == "T" {
 			gd.ClearScreen()
 			fmt.Println("\r\nTERMINAL SIZE DETECT:")
 			fmt.Fprintf(os.Stdout, "Height: %v\r\n", h)
 			fmt.Fprintf(os.Stdout, "Width: %v\r\n", w)
+			gd.Pause()
 		}
-		gd.Pause()
 		gd.ClearScreen()
 		continue
 	}
-
 }

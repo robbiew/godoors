@@ -115,9 +115,18 @@ const (
 	ColorReset = Esc + "0m"
 )
 
-func Modal(text string, w int, h int) {
-	SaveScreen()
-	AbsCenterText(text, w, h)
+// Continue Y/N
+func Continue() {
+	_, _, err := keyboard.GetKey()
+	if err != nil {
+		panic(err)
+	}
+
+}
+
+func Modal(text string, l int, w int, h int) {
+	AbsCenterArt("modalBg.ans", 33, w, h)
+	AbsCenterText(text, l, w, h, BackgroundColorCyan)
 }
 
 func TruncateText(s string, max int) string {
@@ -393,8 +402,31 @@ func CenterText(s string, w int) {
 }
 
 // Horizontally and Vertically center some text.
-func AbsCenterText(s string, w int, h int) {
-	yCenter := h / 2
-	MoveCursor(0, yCenter)
-	fmt.Fprintf(os.Stdout, (fmt.Sprintf("%[1]*s", -w, fmt.Sprintf("%[1]*s", (w+len(s))/2, s))))
+func AbsCenterText(s string, l int, w int, h int, c string) {
+	centerY := h / 2
+	halfLen := l / 2
+	centerX := (w - w/2) - halfLen
+	MoveCursor(centerX, centerY)
+	fmt.Fprintf(os.Stdout, TextColorBrightWhite+c+s+ColorReset)
+	Continue()
+}
+
+func AbsCenterArt(file string, l int, w int, h int) {
+	artY := (h / 2) - 2
+	artLen := l / 2
+	artX := (w - w/2) - artLen
+
+	content, err := ioutil.ReadFile(file)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	noSauce := TrimStringFromSauce(string(content)) // strip off the SAUCE metadata
+	s := bufio.NewScanner(strings.NewReader(string(noSauce)))
+
+	for s.Scan() {
+		fmt.Fprintf(os.Stdout, Esc+strconv.Itoa(artY)+";"+strconv.Itoa(artX)+"f")
+		fmt.Println(s.Text())
+		artY++
+	}
 }
