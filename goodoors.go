@@ -388,13 +388,13 @@ func PrintStringLoc(text string, x int, y int) {
 }
 
 // Horizontally center some text.
-func CenterText(s string, w int) string {
-	return fmt.Sprintf("%[1]*s", -w, fmt.Sprintf("%[1]*s", (w+len(s))/2, s))
+func CenterText(s string, w int) {
+	fmt.Fprintf(os.Stdout, (fmt.Sprintf("%[1]*s", -w, fmt.Sprintf("%[1]*s", (w+len(s))/2, s))))
 }
 
 // Horizontally and Vertically center some text.
-func AbsCenterText(s string, w int, h int) string {
+func AbsCenterText(s string, w int, h int) {
 	yCenter := h / 2
 	MoveCursor(0, yCenter)
-	return fmt.Sprintf("%[1]*s", -w, fmt.Sprintf("%[1]*s", (w+len(s))/2, s))
+	fmt.Fprintf(os.Stdout, (fmt.Sprintf("%[1]*s", -w, fmt.Sprintf("%[1]*s", (w+len(s))/2, s))))
 }

@@ -99,7 +99,7 @@ func main() {
 		}
 		if string(char) == "m" || string(char) == "M" {
 			gd.SaveScreen()
-			fmt.Println("\r\nMODAL TEST (SyncTerm):")
+			fmt.Println("\r\nMODAL TEST:")
 			gd.Modal("This is a test", 14, h)
 		}
 		if string(char) == "t" || string(char) == "T" {
