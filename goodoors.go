@@ -178,7 +178,7 @@ func DropFileData(path string) (string, int, int) {
 		if count == 8 {
 			dropTimeLeft = line
 		}
-		if count == 8 {
+		if count == 9 {
 			dropEmulation = line
 		}
 
