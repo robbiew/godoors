@@ -37,6 +37,18 @@ const (
 	Ibmthin         = Esc + "0;26 D"
 )
 
+// Symbols
+var (
+	Heart        = string([]rune{'\u0003'})
+	ArrowUpDown  = string([]rune{'\u0017'})
+	ArrowUp      = string([]rune{'\u0018'})
+	ArrowDown    = string([]rune{'\u0019'})
+	ArrowDownFat = string([]rune{'\u001F'})
+	ArrowRight   = string([]rune{'\u0010'})
+	ArrowLeft    = string([]rune{'\u0011'})
+	Block        = string([]rune{'\u0219'})
+)
+
 // Common ANSI escapes sequences. These should be used when the desired action
 // is only needed once; otherwise, use the functions (e.g. moving a cursor
 // several lines/columns). See: https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences
@@ -107,6 +119,19 @@ func Modal() {
 
 }
 
+func TruncateText(s string, max int) string {
+	if len(s) > max {
+		r := 0
+		for i := range s {
+			r++
+			if r > max-3 {
+				return s[:i] + "..."
+			}
+		}
+	}
+	return s
+}
+
 func Pause() {
 
 	fmt.Fprintf(os.Stdout, "\r\nPrEsS a KeY")
@@ -114,8 +139,6 @@ func Pause() {
 	if err != nil {
 		panic(err)
 	}
-	// log.Printf("%q", char)
-
 }
 
 func MoveCursor(x int, y int) {
@@ -173,14 +196,14 @@ func CursorHide() {
 	fmt.Print(Esc + "?25l")
 }
 
+// Save the screen.
 func SaveScreen() {
 	fmt.Print(Esc + "?47h")
-
 }
 
+// Restore the saved screen.
 func RestoreScreen() {
 	fmt.Print(Esc + "?47l")
-
 }
 
 func DropFileData(path string) (string, int, int) {
@@ -304,7 +327,6 @@ func GetTermSize() (int, int) {
 }
 
 func PrintAnsi(file string, delay int) {
-
 	content, err := ioutil.ReadFile(file)
 	if err != nil {
 		log.Fatal(err)
@@ -321,7 +343,6 @@ func PrintAnsi(file string, delay int) {
 }
 
 func TrimStringFromSauce(s string) string {
-
 	if idx := strings.Index(s, "COMNT"); idx != -1 {
 		string := s
 		delimiter := "COMNT"
@@ -350,7 +371,6 @@ func TrimLastChar(s string) string {
 func PrintAnsiLoc(file string, x int, y int) {
 
 	yLoc := y
-
 	content, err := ioutil.ReadFile(file)
 	if err != nil {
 		log.Fatal(err)
@@ -364,5 +384,15 @@ func PrintAnsiLoc(file string, x int, y int) {
 		fmt.Println(s.Text())
 		yLoc++
 	}
+}
 
+// Print text at an X, Y location
+func PrintStringLoc(text string, x int, y int) {
+	fmt.Println("\x1b[" + strconv.Itoa(y) + ";" + strconv.Itoa(x) + "f")
+	fmt.Println(text)
+}
+
+// Horizontally center some text.
+func CenterText(s string, w int) string {
+	return fmt.Sprintf("%[1]*s", -w, fmt.Sprintf("%[1]*s", (w+len(s))/2, s))
 }

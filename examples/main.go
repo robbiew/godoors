@@ -59,6 +59,7 @@ func main() {
 		fmt.Println("[C] Color Test")
 		fmt.Println("[D] Drop File Test")
 		fmt.Println("[F] Font Test")
+		fmt.Println("[M] Modal Test")
 		fmt.Println("[T] Term Size Test")
 		fmt.Println("[Q] Quit")
 		fmt.Fprintf(os.Stdout, "\r\nCommand? ")
@@ -96,6 +97,12 @@ func main() {
 			fmt.Println(gd.Topaz + "Topaz")
 			fmt.Println(gd.Mosoul + "Mosoul")
 			fmt.Println(gd.Ibm + "IBM CP437")
+		}
+		if string(char) == "m" || string(char) == "M" {
+			gd.SaveScreen()
+
+			fmt.Println("\r\nFONT TEST (SyncTerm):")
+
 		}
 		if string(char) == "t" || string(char) == "T" {
 
