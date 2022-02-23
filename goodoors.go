@@ -100,6 +100,10 @@ const (
 	ColorReset = Esc + "0m"
 )
 
+func MoveCursor(x int, y int) {
+	fmt.Printf(Esc+"%d;%df", y, x)
+}
+
 // Erase the screen
 func ClearScreen() {
 	fmt.Println(EraseScreen)
