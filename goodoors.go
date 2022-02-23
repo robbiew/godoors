@@ -106,11 +106,11 @@ const (
 func Pause() {
 
 	fmt.Fprintf(os.Stdout, "\r\nPrEsS a KeY")
-	char, _, err := keyboard.GetKey()
+	_, _, err := keyboard.GetKey()
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("%q", char)
+	// log.Printf("%q", char)
 
 }
 

@@ -11,10 +11,6 @@ import (
 
 func main() {
 
-	h, w := gd.GetTermSize()
-
-	gd.ClearScreen()
-
 	pathPtr := flag.String("path", "", "path to door32.sys file")
 
 	required := []string{"path"}
@@ -34,6 +30,9 @@ func main() {
 	path := *pathPtr
 
 	dropAlias, timeInt, emuInt := gd.DropFileData(path)
+
+	h, w := gd.GetTermSize()
+	gd.ClearScreen()
 
 	var emuName string
 
