@@ -116,12 +116,19 @@ const (
 )
 
 // Continue Y/N
-func Continue() {
-	_, _, err := keyboard.GetKey()
+func Continue() bool {
+	char, key, err := keyboard.GetKey()
 	if err != nil {
 		panic(err)
 	}
-
+	var x bool
+	if string(char) == "Y" || string(char) == "y" || key == keyboard.KeyEnter {
+		x = true
+	}
+	if string(char) == "N" || string(char) == "n" || key == keyboard.KeyEsc {
+		x = false
+	}
+	return x
 }
 
 func Modal(text string, l int, w int, h int) {
