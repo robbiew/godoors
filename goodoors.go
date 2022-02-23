@@ -110,8 +110,7 @@ func Pause() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf(" %q", char)
-
+	log.Printf("%q", char)
 }
 
 func MoveCursor(x int, y int) {
@@ -121,6 +120,7 @@ func MoveCursor(x int, y int) {
 // Erase the screen
 func ClearScreen() {
 	fmt.Println(EraseScreen)
+	MoveCursor(0, 0)
 }
 
 // Move the cursor n cells to up.
