@@ -153,10 +153,10 @@ See ```godoors.go``` for other misc. functions.
 
 ## TO-DO
 - Time-out if no key press in X mins
-- ~~Pop-up style window
-- ~~Pause sequence (press any key to continue)
-- ~~Confirm Y/n prompt
-- ~~Get single key press from keyboard
+- ~~Pop-up style window~~
+- ~~Pause sequence (press any key to continue)~~
+- ~~Confirm Y/n prompt~~
+- ~~Get single key press from keyboard~~
 - Get text input, max X characters
 - Countdown timer example
 - Write user data to text file
