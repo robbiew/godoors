@@ -415,7 +415,16 @@ func AbsCenterText(s string, l int, w int, h int, c string) {
 	centerX := (w - w/2) - halfLen
 	MoveCursor(centerX, centerY)
 	fmt.Fprintf(os.Stdout, TextColorBrightWhite+c+s+ColorReset)
-	Continue()
+	result := Continue()
+	if result {
+		fmt.Println("Yes")
+		Pause()
+	}
+	if !result {
+		fmt.Println("No")
+		Pause()
+
+	}
 }
 
 func AbsCenterArt(file string, l int, w int, h int) {

@@ -103,15 +103,8 @@ func main() {
 		if string(char) == "m" || string(char) == "M" {
 			mText := "Continue? Y/n"
 			mLen := len(mText)
-			result := gd.Modal(mText, mLen, w, h)
-			if result == true {
-				fmt.Println("Yes")
-				gd.Pause()
-			}
-			if result == false {
-				fmt.Println("No")
-				gd.Pause()
-			}
+			gd.Modal(mText, mLen, w, h)
+
 		}
 		if string(char) == "t" || string(char) == "T" {
 			gd.ClearScreen()
