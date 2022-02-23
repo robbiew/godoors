@@ -76,7 +76,6 @@ func main() {
 		if string(char) == "a" || string(char) == "A" {
 			fmt.Println("\r\nART TEST:")
 			gd.PrintAnsi("mx-sm.ans", 40)
-			gd.Pause()
 		}
 		if string(char) == "c" || string(char) == "C" {
 
@@ -104,6 +103,8 @@ func main() {
 			fmt.Fprintf(os.Stdout, "Height: %v\r\n", h)
 			fmt.Fprintf(os.Stdout, "Width: %v\r\n", w)
 		}
+		gd.Pause()
+		gd.ClearScreen()
 		continue
 	}
 
