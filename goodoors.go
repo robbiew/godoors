@@ -425,9 +425,11 @@ func AbsCenterText(s string, l int, w int, h int, c string) {
 	result := Continue()
 	if result {
 		fmt.Println(BackgroundColorCyan + TextColorBrightCyan + " Yes" + ColorReset)
+		time.Sleep(1 * time.Second)
 	}
 	if !result {
 		fmt.Println(BackgroundColorCyan + TextColorBrightCyan + " No" + ColorReset)
+		time.Sleep(1 * time.Second)
 	}
 }
 

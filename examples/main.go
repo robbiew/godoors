@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/eiannone/keyboard"
 	gd "github.com/robbiew/godoors"
@@ -11,8 +12,8 @@ import (
 
 func main() {
 
+	// Use FLAG to get command line paramenters
 	pathPtr := flag.String("path", "", "path to door32.sys file")
-
 	required := []string{"path"}
 	flag.Parse()
 
@@ -25,12 +26,14 @@ func main() {
 			os.Exit(2) // the same exit code flag.Parse uses
 		}
 	}
-
 	path := *pathPtr
 
+	// Get info from the Drop File
 	dropAlias, timeInt, emuInt, nodeInt := gd.DropFileData(path)
 
+	// Try and detect terminal size
 	h, w := gd.GetTermSize()
+
 	gd.ClearScreen()
 
 	var emuName string
@@ -43,12 +46,14 @@ func main() {
 
 	gd.MoveCursor(0, 0)
 
-	if emuInt == 0 {
+	// Exit if no ANSI capabilities (sorry!)
+	if emuInt != 1 {
 		fmt.Println("Sorry, ANSI is required to use this...")
-		gd.Pause()
+		time.Sleep(time.Duration(2) * time.Second)
 		os.Exit(0)
 	}
 
+	// A reliable keyboard library to detec key presses
 	if err := keyboard.Open(); err != nil {
 		fmt.Println(err)
 	}
@@ -58,16 +63,17 @@ func main() {
 
 	for {
 		fmt.Fprintf(os.Stdout, "\r\n")
-		// menu
-		fmt.Println(gd.ArrowRight + " ---- MENU ---- " + gd.ArrowLeft)
-		fmt.Println("[A] ANSI Art Test")
-		fmt.Println("[C] Color Test")
-		fmt.Println("[D] Drop File Test")
-		fmt.Println("[F] Font Test")
-		fmt.Println("[M] Modal Test")
-		fmt.Println("[T] Term Size Test")
-		fmt.Println("[Q] Quit")
-		fmt.Fprintf(os.Stdout, "\r\nCommand? ")
+
+		// A Test Menu
+		fmt.Println(gd.TextColorBrightCyan + gd.ArrowRight + gd.ColorReset + gd.TextColorCyan + " GODOORS TEST MENU" + gd.ColorReset)
+		fmt.Println(gd.TextColorCyan + "\r\n[" + gd.TextColorBrightYellow + "A" + gd.TextColorCyan + "] " + gd.ColorReset + gd.TextColorMagenta + "Art Test")
+		fmt.Println(gd.TextColorCyan + "[" + gd.TextColorBrightYellow + "C" + gd.TextColorCyan + "] " + gd.ColorReset + gd.TextColorMagenta + "Color Test")
+		fmt.Println(gd.TextColorCyan + "[" + gd.TextColorBrightYellow + "D" + gd.TextColorCyan + "] " + gd.ColorReset + gd.TextColorMagenta + "Drop File Test")
+		fmt.Println(gd.TextColorCyan + "[" + gd.TextColorBrightYellow + "F" + gd.TextColorCyan + "] " + gd.ColorReset + gd.TextColorMagenta + "Font Test")
+		fmt.Println(gd.TextColorCyan + "[" + gd.TextColorBrightYellow + "M" + gd.TextColorCyan + "] " + gd.ColorReset + gd.TextColorMagenta + "Modal Test")
+		fmt.Println(gd.TextColorCyan + "[" + gd.TextColorBrightYellow + "T" + gd.TextColorCyan + "] " + gd.ColorReset + gd.TextColorMagenta + "Term Size Test")
+		fmt.Println(gd.TextColorCyan + "[" + gd.TextColorBrightYellow + "Q" + gd.TextColorCyan + "] " + gd.ColorReset + gd.TextColorMagenta + "Quit")
+		fmt.Fprintf(os.Stdout, gd.ColorReset+"\r\nCommand? ")
 
 		char, key, err := keyboard.GetKey()
 		if err != nil {
@@ -102,11 +108,16 @@ func main() {
 		if string(char) == "f" || string(char) == "F" {
 			gd.ClearScreen()
 			fmt.Println("\r\nFONT TEST (SyncTerm):")
-			fmt.Println(gd.Topaz + "Topaz")
-			fmt.Println(gd.Mosoul + "Mosoul")
+			fmt.Println(gd.Topaz + "\r\nTopaz")
+			fmt.Println(gd.Topazplus + "Topaz+")
+			fmt.Println(gd.Microknight + "Microknight")
+			fmt.Println(gd.Microknightplus + "Microknight+")
+			fmt.Println(gd.Mosoul + "mO'sOul")
 			fmt.Println(gd.Ibm + "IBM CP437")
+			fmt.Println(gd.Ibmthin + "IBM CP437 Thin")
 			gd.Pause()
 		}
+		// Modal test
 		if string(char) == "m" || string(char) == "M" {
 			mText := "Continue? Y/n"
 			mLen := len(mText)
