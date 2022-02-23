@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 	"unicode/utf8"
 )
 
@@ -274,7 +275,7 @@ func GetTermSize() (int, int) {
 
 }
 
-func PrintAnsi(file string) {
+func PrintAnsi(file string, delay int) {
 
 	content, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -286,6 +287,7 @@ func PrintAnsi(file string) {
 
 	for s.Scan() {
 		fmt.Println(s.Text())
+		time.Sleep(time.Duration(delay) * time.Millisecond)
 	}
 
 }
