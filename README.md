@@ -25,7 +25,7 @@ import (
 gd.DropFileData(path string) (string, int, int)
 ```
 
-> Pass the path of the Door32.sys BBS drop file (including trailing slash), and it will return HANDLE/ALIAS, TIME LEFT (in minutes) and EMULATION TYPE (0 = Ascii, 1 = Ansi). You'll probably want to do this using a "startDoor.sh" file or from your BBS menu command (e.g. /path/to/drop/$NODE/Door32.sys).
+> Pass the path of the Door32.sys BBS drop file (including trailing slash), and it will return HANDLE/ALIAS, TIME LEFT (in minutes) and EMULATION TYPE (0 = Ascii, 1 = Ansi). You'll probably want to do this using a "startDoor.sh" file or from your BBS menu command (e.g. /path/to/drop/$NODE/Door32.sys). You can also run [main.go](examples/main.go) to see it in action -- e.g. 'go run main.go -path ./'
 
 ***
  
