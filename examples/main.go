@@ -43,6 +43,12 @@ func main() {
 
 	gd.MoveCursor(0, 0)
 
+	if emuInt == 0 {
+		fmt.Println("Sorry, ANSI is required to use this...")
+		gd.Pause()
+		os.Exit(0)
+	}
+
 	if err := keyboard.Open(); err != nil {
 		fmt.Println(err)
 	}
@@ -53,7 +59,7 @@ func main() {
 	for {
 		fmt.Fprintf(os.Stdout, "\r\n")
 		// menu
-		fmt.Println("-------MENU-------")
+		fmt.Println(gd.ArrowRight + " ---- MENU ---- " + gd.ArrowLeft)
 		fmt.Println("[A] ANSI Art Test")
 		fmt.Println("[C] Color Test")
 		fmt.Println("[D] Drop File Test")
@@ -104,7 +110,6 @@ func main() {
 			mText := "Continue? Y/n"
 			mLen := len(mText)
 			gd.Modal(mText, mLen, w, h)
-
 		}
 		if string(char) == "t" || string(char) == "T" {
 			gd.ClearScreen()
