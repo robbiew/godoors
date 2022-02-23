@@ -193,12 +193,12 @@ func DropFileData(path string) (string, int, int) {
 
 	timeInt, err := strconv.Atoi(dropTimeLeft) // return as int
 	if err != nil {
-		println(err)
+		log.Fatal(err)
 	}
 
 	emuInt, err := strconv.Atoi(dropEmulation) // return as int
 	if err != nil {
-		println(err)
+		log.Fatal(err)
 	}
 
 	return dropAlias, timeInt, emuInt
