@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 	"unicode/utf8"
+
+	"github.com/eiannone/keyboard"
 )
 
 // CREDIT TO https://github.com/k0kubun/go-ansi for some of these sequences.
@@ -100,6 +102,17 @@ const (
 
 	ColorReset = Esc + "0m"
 )
+
+func Pause() {
+
+	fmt.Fprintf(os.Stdout, "\r\nPrEsS a KeY")
+	char, _, err := keyboard.GetSingleKey()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf(" %q", char)
+
+}
 
 func MoveCursor(x int, y int) {
 	fmt.Printf(Esc+"%d;%df", y, x)

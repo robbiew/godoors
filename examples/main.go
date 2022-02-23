@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/eiannone/keyboard"
 	gd "github.com/robbiew/godoors"
 )
 
@@ -43,24 +44,68 @@ func main() {
 	}
 
 	gd.MoveCursor(0, 0)
-	fmt.Println("Screen Cleared!")
-	fmt.Println("Cursor moved to 0,0")
 
-	fmt.Println("\r\nDROP FILE:")
-	fmt.Println("Alias: " + dropAlias)
-	fmt.Fprintf(os.Stdout, "Emulation: %v\r\n", emuName)
-	fmt.Fprintf(os.Stdout, "Time Left: %v\r\n", timeInt)
+	if err := keyboard.Open(); err != nil {
+		fmt.Println(err)
+	}
+	defer func() {
+		_ = keyboard.Close()
+	}()
 
-	fmt.Println("\r\nHEIGHT,WiDTH DETECT:")
-	fmt.Fprintf(os.Stdout, "Height: %v\r\n", h)
-	fmt.Fprintf(os.Stdout, "Width: %v\r\n", w)
+	for {
+		fmt.Fprintf(os.Stdout, "\r\n")
+		// menu
+		fmt.Println("-------MENU-------")
+		fmt.Println("[A] ANSI Art Test")
+		fmt.Println("[C] Color Test")
+		fmt.Println("[D] Drop File Test")
+		fmt.Println("[F] Font Test")
+		fmt.Println("[T] Term Size Test")
+		fmt.Println("[Q] Quit")
+		fmt.Fprintf(os.Stdout, "\r\nCommand? ")
 
-	fmt.Println("\r\nCOLOR TEST:")
-	fmt.Println(gd.BackgroundColorBlue + gd.TextColorWhite + " White Text on Blue " + gd.ColorReset)
-	fmt.Println(gd.BackgroundColorRed + gd.TextColorBrightRed + " Red Text on Bright Red " + gd.ColorReset)
+		char, key, err := keyboard.GetKey()
+		if err != nil {
+			panic(err)
+		}
+		if string(char) == "q" || string(char) == "Q" || key == keyboard.KeyEsc {
+			break
+		}
+		if string(char) == "a" || string(char) == "A" {
+			fmt.Println("\r\nART TEST:")
+			gd.PrintAnsi("mx-sm.ans", 40)
+		}
+		if string(char) == "c" || string(char) == "C" {
+			gd.ClearScreen()
+			gd.MoveCursor(0, 0)
+			fmt.Println("\r\nCOLOR TEST:")
+			fmt.Println(gd.BackgroundColorBlue + gd.TextColorWhite + " White Text on Blue " + gd.ColorReset)
+			fmt.Println(gd.BackgroundColorRed + gd.TextColorBrightRed + " Red Text on Bright Red " + gd.ColorReset)
+		}
+		if string(char) == "d" || string(char) == "D" {
+			gd.ClearScreen()
+			gd.MoveCursor(0, 0)
+			fmt.Println("\r\nDROP FILE:")
+			fmt.Println("Alias: " + dropAlias)
+			fmt.Fprintf(os.Stdout, "Emulation: %v\r\n", emuName)
+			fmt.Fprintf(os.Stdout, "Time Left: %v\r\n", timeInt)
+		}
+		if string(char) == "f" || string(char) == "F" {
+			gd.ClearScreen()
+			gd.MoveCursor(0, 0)
+			fmt.Println("\r\nFONT TEST (SyncTerm):")
+			fmt.Println(gd.Topaz + "Topaz")
+			fmt.Println(gd.Mosoul + "Mosoul")
+			fmt.Println(gd.Ibm + "IBM CP437")
+		}
+		if string(char) == "t" || string(char) == "T" {
+			gd.ClearScreen()
+			gd.MoveCursor(0, 0)
+			fmt.Println("\r\nTERMINAL SIZE DETECT:")
+			fmt.Fprintf(os.Stdout, "Height: %v\r\n", h)
+			fmt.Fprintf(os.Stdout, "Width: %v\r\n", w)
+		}
+		continue
+	}
 
-	fmt.Println("\r\nFONT TEST (SyncTerm):")
-	fmt.Println(gd.Topaz + "Topaz")
-	fmt.Println(gd.Mosoul + "Mosoul")
-	fmt.Println(gd.Ibm + "IBM CP437")
 }
