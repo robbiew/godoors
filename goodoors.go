@@ -224,11 +224,12 @@ func RestoreScreen() {
 	fmt.Print(Esc + "?47l")
 }
 
-func DropFileData(path string) (string, int, int) {
+func DropFileData(path string) (string, int, int, int) {
 	// path needs to include trailing slash!
 	var dropAlias string
 	var dropTimeLeft string
 	var dropEmulation string
+	var nodeNum string
 
 	file, err := os.Open(strings.ToLower(path + "door32.sys"))
 	if err != nil {
@@ -256,7 +257,9 @@ func DropFileData(path string) (string, int, int) {
 		if count == 9 {
 			dropEmulation = line
 		}
-
+		if count == 10 {
+			nodeNum = line
+		}
 		if count == 11 {
 			break
 		}
@@ -275,8 +278,12 @@ func DropFileData(path string) (string, int, int) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	nodeInt, err := strconv.Atoi(nodeNum) // return as int
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	return dropAlias, timeInt, emuInt
+	return dropAlias, timeInt, emuInt, nodeInt
 }
 
 /*

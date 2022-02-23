@@ -28,7 +28,7 @@ func main() {
 
 	path := *pathPtr
 
-	dropAlias, timeInt, emuInt := gd.DropFileData(path)
+	dropAlias, timeInt, emuInt, nodeInt := gd.DropFileData(path)
 
 	h, w := gd.GetTermSize()
 	gd.ClearScreen()
@@ -94,6 +94,7 @@ func main() {
 			gd.ClearScreen()
 			fmt.Println("\r\nDROP FILE:")
 			fmt.Println("Alias: " + dropAlias)
+			fmt.Fprintf(os.Stdout, "Node: %v\r\n", nodeInt)
 			fmt.Fprintf(os.Stdout, "Emulation: %v\r\n", emuName)
 			fmt.Fprintf(os.Stdout, "Time Left: %v\r\n", timeInt)
 			gd.Pause()
