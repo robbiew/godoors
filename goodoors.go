@@ -113,11 +113,12 @@ func Pause() {
 	}()
 
 	fmt.Fprintf(os.Stdout, "\r\nPrEsS a KeY")
-	char, _, err := keyboard.GetSingleKey()
+	char, _, err := keyboard.GetKey()
 	if err != nil {
 		panic(err)
 	}
 	log.Printf("%q", char)
+
 }
 
 func MoveCursor(x int, y int) {
