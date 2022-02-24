@@ -16,7 +16,7 @@ import (
 	"github.com/eiannone/keyboard"
 )
 
-var idle int = 10
+var idle int = 180
 
 // CREDIT TO https://github.com/k0kubun/go-ansi for some of these sequences.
 

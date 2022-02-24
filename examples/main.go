@@ -10,7 +10,7 @@ import (
 	gd "github.com/robbiew/godoors"
 )
 
-var idle int = 10
+var idle int = 180
 
 func main() {
 
