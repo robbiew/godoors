@@ -26,7 +26,7 @@ import (
 gd.DropFileData(path string) (string, int, int)
 ```
 
-> Pass the path of the Door32.sys BBS drop file (including trailing slash), and it will return HANDLE/ALIAS, TIME LEFT (in minutes) and EMULATION TYPE (0 = Ascii, 1 = Ansi). You'll probably want to do this using a "startDoor.sh" file or from your BBS menu command (e.g. /path/to/drop/$NODE/Door32.sys). You can also run [main.go](examples/main.go) to see it in action -- e.g. 
+> Pass the path of the [door32.sys](https://raw.githubusercontent.com/NuSkooler/ansi-bbs/master/docs/dropfile_formats/door32_sys.txt) drop file (including trailing slash), and it will return HANDLE/ALIAS, TIME LEFT (in minutes), EMULATION TYPE (0 = Ascii, 1 = Ansi) and NODE NUMBER. You can check out the [main.go](examples/main.go) to see it in action using FLAG to handle the ```-path``` command line argument for the file location.
 
 ```go
 go run main.go -path ./
@@ -56,7 +56,7 @@ gd.PrintAnsiLoc(file string, x int, y int)
 gd.PrintStringLoc(text string, x int, y int)
 ```
 
-> Same as above, only it'll print the art to the screen at X/Y coordinates, incrementing the Y position after every line. Handy of you need to update the screen with art in a particular location without clearing and re-writing everything.
+> Same as above, only it'll print the art to the screen at X,Y coordinates, incrementing the Y position after every line. Handy of you need to update the screen with art in a particular location without clearing and re-writing everything.
 
 ***
 ## PAUSE
