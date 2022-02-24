@@ -1,6 +1,6 @@
 github.com/eiannone/keyboard v0.0.0-20200508000154-caf4b762e807 h1:jdjd5e68T4R/j4PWxfZqcKY8KtT9oo8IPNVuV4bSXDQ=
 github.com/eiannone/keyboard v0.0.0-20200508000154-caf4b762e807/go.mod h1:Xoiu5VdKMvbRgHuY7+z64lhu/7lvax/22nzASF6GrO8=
-github.com/robbiew/godoors v0.0.0-20220224002114-fcbb84059001 h1:rCYLfqLRJA3iMNnVOhqy9DhQuys6mOWPV5hGPoGAGpM=
-github.com/robbiew/godoors v0.0.0-20220224002114-fcbb84059001/go.mod h1:BwGR20eA8UHPzBvZGvEHUy3pgQAI406uefS6BzajnTM=
+github.com/robbiew/godoors v0.0.0-20220224011047-c2fe80c07ba1 h1:ar/BCdHeQuKwcdAZYgslKelkCDMafmE8jFWmgCkgJwA=
+github.com/robbiew/godoors v0.0.0-20220224011047-c2fe80c07ba1/go.mod h1:BwGR20eA8UHPzBvZGvEHUy3pgQAI406uefS6BzajnTM=
 golang.org/x/sys v0.0.0-20220223155357-96fed51e1446 h1:ka7ppF8KGOfo7t8LOHIzmMPoZCQwgTBuW6nvSxYC84c=
 golang.org/x/sys v0.0.0-20220223155357-96fed51e1446/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=

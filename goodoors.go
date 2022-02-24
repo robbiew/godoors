@@ -16,7 +16,7 @@ import (
 	"github.com/eiannone/keyboard"
 )
 
-var idle int = 180
+var Idle int = 180
 
 // CREDIT TO https://github.com/k0kubun/go-ansi for some of these sequences.
 
@@ -119,7 +119,7 @@ const (
 
 // Continue Y/N
 func Continue() bool {
-	shortTimer := NewTimer(idle, func() {
+	shortTimer := NewTimer(Idle, func() {
 		fmt.Println("\r\nYou've been idle for too long... exiting!")
 		time.Sleep(1 * time.Second)
 		os.Exit(0)
@@ -172,7 +172,7 @@ func NewTimer(seconds int, action func()) *time.Timer {
 // Wait for a key press
 func Pause() {
 
-	shortTimer := NewTimer(idle, func() {
+	shortTimer := NewTimer(Idle, func() {
 		fmt.Println("\r\nYou've been idle for too long... exiting!")
 		time.Sleep(1 * time.Second)
 		os.Exit(0)
