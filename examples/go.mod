@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/eiannone/keyboard v0.0.0-20200508000154-caf4b762e807
-	github.com/robbiew/godoors v0.0.0-20220224011629-058b1e047da5
+	github.com/robbiew/godoors v0.0.0-20220224011934-7b7ebd88b81f
 )
 
-require golang.org/x/sys v0.0.0-20220223155357-96fed51e1446 // indirect
+require golang.org/x/sys v0.0.0-20220224003255-dbe011f71a99 // indirect
