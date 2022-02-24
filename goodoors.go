@@ -16,6 +16,8 @@ import (
 	"github.com/eiannone/keyboard"
 )
 
+var idle int = 10
+
 // CREDIT TO https://github.com/k0kubun/go-ansi for some of these sequences.
 
 // Common fragments of escape sequences
@@ -149,8 +151,27 @@ func TruncateText(s string, max int) string {
 	return s
 }
 
+// NewTimer boots a user after being idle too long
+func NewTimer(seconds int, action func()) *time.Timer {
+	timer := time.NewTimer(time.Second * time.Duration(seconds))
+
+	go func() {
+		<-timer.C
+		action()
+	}()
+	return timer
+}
+
 // Wait for a key press
 func Pause() {
+
+	shortTimer := NewTimer(idle, func() {
+		fmt.Println("\r\nYou've been idle for 2 minutes... exiting!")
+		time.Sleep(1 * time.Second)
+		os.Exit(0)
+	})
+	defer shortTimer.Stop()
+
 	fmt.Fprintf(os.Stdout, "\r\nPrEsS a KeY")
 	_, _, err := keyboard.GetKey()
 	if err != nil {

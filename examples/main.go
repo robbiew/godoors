@@ -10,7 +10,16 @@ import (
 	gd "github.com/robbiew/godoors"
 )
 
+var idle int = 5
+
 func main() {
+
+	shortTimer := gd.NewTimer(idle, func() {
+		fmt.Println("\r\nYou've been idle for 2 minutes... exiting!")
+		time.Sleep(1 * time.Second)
+		os.Exit(0)
+	})
+	defer shortTimer.Stop()
 
 	// Use FLAG to get command line paramenters
 	pathPtr := flag.String("path", "", "path to door32.sys file")
@@ -62,6 +71,14 @@ func main() {
 	}()
 
 	for {
+
+		shortTimer.Stop()
+		shortTimer = gd.NewTimer(idle, func() {
+			fmt.Println("\r\nYou've been idle for too long... exiting!")
+			time.Sleep(1 * time.Second)
+			os.Exit(0)
+		})
+
 		fmt.Fprintf(os.Stdout, "\r\n")
 
 		// A Test Menu
@@ -84,12 +101,14 @@ func main() {
 			break
 		}
 		if string(char) == "a" || string(char) == "A" {
+			shortTimer.Stop()
 			gd.ClearScreen()
 			fmt.Println("\r\nART TEST:")
 			gd.PrintAnsi("mx-sm.ans", 40)
 			gd.Pause()
 		}
 		if string(char) == "c" || string(char) == "C" {
+			shortTimer.Stop()
 			fmt.Println("\r\nCOLOR TEST:")
 			gd.ClearScreen()
 			fmt.Println(gd.BackgroundColorBlue + gd.TextColorWhite + " White Text on Blue " + gd.ColorReset)
@@ -97,6 +116,7 @@ func main() {
 			gd.Pause()
 		}
 		if string(char) == "d" || string(char) == "D" {
+			shortTimer.Stop()
 			gd.ClearScreen()
 			fmt.Println("\r\nDROP FILE:")
 			fmt.Println("Alias: " + dropAlias)
@@ -106,6 +126,7 @@ func main() {
 			gd.Pause()
 		}
 		if string(char) == "f" || string(char) == "F" {
+			shortTimer.Stop()
 			gd.ClearScreen()
 			fmt.Println("\r\nFONT TEST (SyncTerm):")
 			fmt.Println(gd.Topaz + "\r\nTopaz")
@@ -119,11 +140,13 @@ func main() {
 		}
 		// Modal test
 		if string(char) == "m" || string(char) == "M" {
+			shortTimer.Stop()
 			mText := "Continue? Y/n"
 			mLen := len(mText)
 			gd.Modal(mText, mLen, w, h)
 		}
 		if string(char) == "t" || string(char) == "T" {
+			shortTimer.Stop()
 			gd.ClearScreen()
 			fmt.Println("\r\nTERMINAL SIZE DETECT:")
 			fmt.Fprintf(os.Stdout, "Height: %v\r\n", h)
