@@ -80,41 +80,41 @@ const (
 	EraseUp     = Esc + "1J"
 	EraseScreen = Esc + "2J"
 
-	TextColorBlack         = Esc + "30m"
-	TextColorRed           = Esc + "31m"
-	TextColorGreen         = Esc + "32m"
-	TextColorYellow        = Esc + "33m"
-	TextColorBlue          = Esc + "34m"
-	TextColorMagenta       = Esc + "35m"
-	TextColorCyan          = Esc + "36m"
-	TextColorWhite         = Esc + "37m"
-	TextColorBrightBlack   = Esc + "30;1m"
-	TextColorBrightRed     = Esc + "31;1m"
-	TextColorBrightGreen   = Esc + "32;1m"
-	TextColorBrightYellow  = Esc + "33;1m"
-	TextColorBrightBlue    = Esc + "34;1m"
-	TextColorBrightMagenta = Esc + "35;1m"
-	TextColorBrightCyan    = Esc + "36;1m"
-	TextColorBrightWhite   = Esc + "37;1m"
+	Black     = Esc + "30m"
+	Red       = Esc + "31m"
+	Green     = Esc + "32m"
+	Yellow    = Esc + "33m"
+	Blue      = Esc + "34m"
+	Magenta   = Esc + "35m"
+	Cyan      = Esc + "36m"
+	White     = Esc + "37m"
+	BlackHi   = Esc + "30;1m"
+	RedHi     = Esc + "31;1m"
+	GreenHi   = Esc + "32;1m"
+	YellowHi  = Esc + "33;1m"
+	BlueHi    = Esc + "34;1m"
+	MagentaHi = Esc + "35;1m"
+	CyanHi    = Esc + "36;1m"
+	WhiteHi   = Esc + "37;1m"
 
-	BackgroundColorBlack         = Esc + "40m"
-	BackgroundColorRed           = Esc + "41m"
-	BackgroundColorGreen         = Esc + "42m"
-	BackgroundColorYellow        = Esc + "43m"
-	BackgroundColorBlue          = Esc + "44m"
-	BackgroundColorMagenta       = Esc + "45m"
-	BackgroundColorCyan          = Esc + "46m"
-	BackgroundColorWhite         = Esc + "47m"
-	BackgroundColorBrightBlack   = Esc + "40;1m"
-	BackgroundColorBrightRed     = Esc + "41;1m"
-	BackgroundColorBrightGreen   = Esc + "42;1m"
-	BackgroundColorBrightYellow  = Esc + "43;1m"
-	BackgroundColorBrightBlue    = Esc + "44;1m"
-	BackgroundColorBrightMagenta = Esc + "45;1m"
-	BackgroundColorBrightCyan    = Esc + "46;1m"
-	BackgroundColorBrightWhite   = Esc + "47;1m"
+	BgBlack     = Esc + "40m"
+	BgRed       = Esc + "41m"
+	BgGreen     = Esc + "42m"
+	BgYellow    = Esc + "43m"
+	BgBlue      = Esc + "44m"
+	BgMagenta   = Esc + "45m"
+	BgCyan      = Esc + "46m"
+	BgWhite     = Esc + "47m"
+	BgBlackHi   = Esc + "40;1m"
+	BgRedHi     = Esc + "41;1m"
+	BgGreenHi   = Esc + "42;1m"
+	BgYellowHi  = Esc + "43;1m"
+	BgBlueHi    = Esc + "44;1m"
+	BgMagentaHi = Esc + "45;1m"
+	BgCyanHi    = Esc + "46;1m"
+	BgWhiteHi   = Esc + "47;1m"
 
-	ColorReset = Esc + "0m"
+	Reset = Esc + "0m"
 )
 
 // Continue Y/N
@@ -142,7 +142,7 @@ func Continue() bool {
 
 func Modal(text string, l int, w int, h int) {
 	AbsCenterArt("modalBg.ans", 33, w, h)
-	AbsCenterText(text, l, w, h, BackgroundColorCyan)
+	AbsCenterText(text, l, w, h, BgCyan)
 }
 
 func TruncateText(s string, max int) string {
@@ -449,14 +449,14 @@ func AbsCenterText(s string, l int, w int, h int, c string) {
 	halfLen := l / 2
 	centerX := (w - w/2) - halfLen
 	MoveCursor(centerX, centerY)
-	fmt.Fprintf(os.Stdout, TextColorBrightWhite+c+s+ColorReset)
+	fmt.Fprintf(os.Stdout, WhiteHi+c+s+Reset)
 	result := Continue()
 	if result {
-		fmt.Println(BackgroundColorCyan + TextColorBrightCyan + " Yes" + ColorReset)
+		fmt.Println(Cyan + CyanHi + " Yes" + Reset)
 		time.Sleep(1 * time.Second)
 	}
 	if !result {
-		fmt.Println(BackgroundColorCyan + TextColorBrightCyan + " No" + ColorReset)
+		fmt.Println(BgCyan + CyanHi + " No" + Reset)
 		time.Sleep(1 * time.Second)
 	}
 }

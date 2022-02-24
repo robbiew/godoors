@@ -84,15 +84,15 @@ func main() {
 		fmt.Fprintf(os.Stdout, "\r\n")
 
 		// A Test Menu
-		fmt.Println(gd.TextColorBrightCyan + gd.ArrowRight + gd.ColorReset + gd.TextColorCyan + " GODOORS TEST MENU" + gd.ColorReset)
-		fmt.Println(gd.TextColorCyan + "\r\n[" + gd.TextColorBrightYellow + "A" + gd.TextColorCyan + "] " + gd.ColorReset + gd.TextColorMagenta + "Art Test")
-		fmt.Println(gd.TextColorCyan + "[" + gd.TextColorBrightYellow + "C" + gd.TextColorCyan + "] " + gd.ColorReset + gd.TextColorMagenta + "Color Test")
-		fmt.Println(gd.TextColorCyan + "[" + gd.TextColorBrightYellow + "D" + gd.TextColorCyan + "] " + gd.ColorReset + gd.TextColorMagenta + "Drop File Test")
-		fmt.Println(gd.TextColorCyan + "[" + gd.TextColorBrightYellow + "F" + gd.TextColorCyan + "] " + gd.ColorReset + gd.TextColorMagenta + "Font Test")
-		fmt.Println(gd.TextColorCyan + "[" + gd.TextColorBrightYellow + "M" + gd.TextColorCyan + "] " + gd.ColorReset + gd.TextColorMagenta + "Modal Test")
-		fmt.Println(gd.TextColorCyan + "[" + gd.TextColorBrightYellow + "T" + gd.TextColorCyan + "] " + gd.ColorReset + gd.TextColorMagenta + "Term Size Test")
-		fmt.Println(gd.TextColorCyan + "[" + gd.TextColorBrightYellow + "Q" + gd.TextColorCyan + "] " + gd.ColorReset + gd.TextColorMagenta + "Quit")
-		fmt.Fprintf(os.Stdout, gd.ColorReset+"\r\nCommand? ")
+		fmt.Println(gd.CyanHi + gd.ArrowRight + gd.Reset + gd.Cyan + " GODOORS TEST MENU" + gd.Reset)
+		fmt.Println(gd.Cyan + "\r\n[" + gd.YellowHi + "A" + gd.Cyan + "] " + gd.Reset + gd.Magenta + "Art Test")
+		fmt.Println(gd.Cyan + "[" + gd.YellowHi + "C" + gd.Cyan + "] " + gd.Reset + gd.Magenta + "Color Test")
+		fmt.Println(gd.Cyan + "[" + gd.YellowHi + "D" + gd.Cyan + "] " + gd.Reset + gd.Magenta + "Drop File Test")
+		fmt.Println(gd.Cyan + "[" + gd.YellowHi + "F" + gd.Cyan + "] " + gd.Reset + gd.Magenta + "Font Test")
+		fmt.Println(gd.Cyan + "[" + gd.YellowHi + "M" + gd.Cyan + "] " + gd.Reset + gd.Magenta + "Modal Test")
+		fmt.Println(gd.Cyan + "[" + gd.YellowHi + "T" + gd.Cyan + "] " + gd.Reset + gd.Magenta + "Term Size Test")
+		fmt.Println(gd.Cyan + "[" + gd.YellowHi + "Q" + gd.Cyan + "] " + gd.Reset + gd.Magenta + "Quit")
+		fmt.Fprintf(os.Stdout, gd.Reset+"\r\nCommand? ")
 
 		char, key, err := keyboard.GetKey()
 		if err != nil {
@@ -113,8 +113,8 @@ func main() {
 			shortTimer.Stop()
 			fmt.Println("\r\nCOLOR TEST:")
 			gd.ClearScreen()
-			fmt.Println(gd.BackgroundColorBlue + gd.TextColorWhite + " White Text on Blue " + gd.ColorReset)
-			fmt.Println(gd.BackgroundColorRed + gd.TextColorBrightRed + " Red Text on Bright Red " + gd.ColorReset)
+			fmt.Println(gd.BgBlue + gd.White + " White Text on Blue " + gd.Reset)
+			fmt.Println(gd.BgRed + gd.RedHi + " Red Text on Bright Red " + gd.Reset)
 			gd.Pause()
 		}
 		if string(char) == "d" || string(char) == "D" {
