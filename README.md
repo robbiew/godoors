@@ -27,6 +27,7 @@ gd.DropFileData(path string) (string, int, int)
 ```
 
 > Pass the path of the [door32.sys](https://raw.githubusercontent.com/NuSkooler/ansi-bbs/master/docs/dropfile_formats/door32_sys.txt) drop file PARENT FOLDER (including trailing slash), and it will return HANDLE/ALIAS, TIME LEFT (in minutes), EMULATION TYPE (0 = Ascii, 1 = Ansi) and NODE NUMBER. You can check out the [main.go](examples/main.go) to see it in action using FLAG to handle the ```-path``` command line argument for the folder location.
+> Only door32.sys is supported at this time.
 
 ```go
 go run main.go -path ./
