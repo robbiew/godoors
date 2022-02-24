@@ -158,7 +158,7 @@ See ```godoors.go``` for other misc. functions.
 - ~~Confirm Y/n prompt~~
 - ~~Get single key press from keyboard~~
 - Get text input, max X characters
-- Countdown timer example
+- ~~Idle/timeout timer example~~
 - Write user data to text file
 - Create a leader or score board
 - Write user data to sqlite file
