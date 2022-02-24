@@ -16,11 +16,11 @@ import (
 	"github.com/eiannone/keyboard"
 )
 
+// seconds until time-out
 var Idle int = 180
 
 // CREDIT TO https://github.com/k0kubun/go-ansi for some of these sequences.
 
-// Common fragments of escape sequences
 const (
 	Esc = "\u001B["
 	Osc = "\u001B]"
