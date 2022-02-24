@@ -34,7 +34,7 @@ go run main.go -path ./
 
 ***
  
-## TERMINAL HEIGHT AND WIDTH
+## GET TERMINAL HEIGHT AND WIDTH
 ```go
 gd.GetTermSize() (int, int)
 ```
@@ -64,6 +64,8 @@ gd.PrintStringLoc(text string, x int, y int)
 gd.Pause()
 ```
 
+> Hit any key 
+
 ***
 ## CONTINUE Y/N PROMPT
 ```go
@@ -74,7 +76,10 @@ gd.Continue()
 ## POP UP STYLE MODAL
 ```go
 gd.Modal(text string, l int, w int, h int)
+
 ```
+
+> currently coded to display a background ANSI file with a "Continue? Y/n" prompt/
 
 ***
 
@@ -84,6 +89,7 @@ gd.AbsCenterText(s string, l int, w int, h int, c string)
 gd.AbsCenterArt(file string, l int, w int, h int) 
 gd.CenterText(s string, w int) 
 ```
+> "absolute center" being both vertically an horizontally centered based in the terminal height and width.
 
 ***
 
