@@ -19,10 +19,8 @@ import (
 )
 ```
 
-## General functions
 
-
-### DROP FILES
+## DROP FILES
 
 ```go 
 gd.DropFileData(path string) (string, int, int)
@@ -36,7 +34,7 @@ go run main.go -path ./
 
 ***
  
-### TERMINAL HEIGHT AND WIDTH
+## TERMINAL HEIGHT AND WIDTH
 ```go
 gd.GetTermSize() (int, int)
 ```
@@ -44,7 +42,7 @@ gd.GetTermSize() (int, int)
 > Tries to detect the user's terminal size. Returns HEIGHT and WIDTH. If it can't detect it, it'll default to 25 and 80.
 
 ***
-### DISPLAY ANSI ART
+## DISPLAY ANSI ART
 ```go
 gd.PrintAnsi(file string)
 ```
@@ -52,34 +50,35 @@ gd.PrintAnsi(file string)
 > Pass the valid path of an ANSI art file and it'll strip the SAUCE record, then print it line by line, with an optional delay to simulate slower speeds.
 
 ***
-### DISPLAY ART AT X,Y COORDINATES
+## DISPLAY SOMETHING AT X,Y COORDINATES
 ```go
 gd.PrintAnsiLoc(file string, x int, y int)
+gd.PrintStringLoc(text string, x int, y int)
 ```
 
 > Same as above, only it'll print the art to the screen at X/Y coordinates, incrementing the Y position after every line. Handy of you need to update the screen with art in a particular location without clearing and re-writing everything.
 
 ***
-### PAUSE
+## PAUSE
 ```go
 gd.Pause()
 ```
 
 ***
-### CONTINUE Y/N PROMPT
+## CONTINUE Y/N PROMPT
 ```go
 gd.Continue()
 ```
 
 ***
-### POP UP STYLE MODAL
+## POP UP STYLE MODAL
 ```go
 gd.Modal(text string, l int, w int, h int)
 ```
 
 ***
 
-### CENTER SOMETHING (text, art, etc.)
+## CENTER SOMETHING (text, art, etc.)
 ```go
 gd.AbsCenterText(s string, l int, w int, h int, c string) 
 gd.AbsCenterArt(file string, l int, w int, h int) 
@@ -162,7 +161,7 @@ gd.BgBWhiteHi
 gd.Reset 
 ```
 ***
-### FONTS
+## FONTS
 ```go
 // Supported by SyncTerm
 // usage: fmt.Println(gd.Topaz)
@@ -178,7 +177,7 @@ gd.Ibmthin
 
 ***
 
-### MISC
+## MISC
 See [godoors.go](godoors.go) for other misc. functions.
 - Configurable idle/exit timer
 - Menu loop
