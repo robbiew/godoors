@@ -179,7 +179,7 @@ gd.Ibmthin
 ***
 
 ### MISC
-See ```godoors.go``` for other misc. functions.
+See [godoors.go](godoors.go) for other misc. functions.
 - Configurable idle/exit timer
 - Menu loop
 
