@@ -1,4 +1,4 @@
-# GoDoors
+# :computer: GoDoors
 
 Helpful library for creating linux-based door applications (like games and utilities) for BBSs that utilize STDIN and STDOUT, when connected over a terminal program like [SyncTerm](https://syncterm.bbsdev.net/), [MagiTerm](https://gitlab.com/magickabbs/MagiTerm), [NetRunner](http://mysticbbs.com/downloads.html) or [IGTerm](https://www.phenomprod.com/).
 
