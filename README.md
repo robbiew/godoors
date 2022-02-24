@@ -60,6 +60,33 @@ gd.PrintAnsiLoc(file string, x int, y int)
 > Same as above, only it'll print the art to the screen at X/Y coordinates, incrementing the Y position after every line. Handy of you need to update the screen with art in a particular location without clearing and re-writing everything.
 
 ***
+### PAUSE
+```go
+gd.Pause()
+```
+
+***
+### CONTINUE Y/N PROMPT
+```go
+gd.Continue()
+```
+
+***
+### POP UP STYLE MODAL
+```go
+gd.Modal(text string, l int, w int, h int)
+```
+
+***
+
+### CENTER SOMETHING (text, art, etc.)
+```go
+gd.AbsCenterText(s string, l int, w int, h int, c string) 
+gd.AbsCenterArt(file string, l int, w int, h int) 
+gd.CenterText(s string, w int) 
+```
+
+***
 
 ## Cursor related
 
@@ -104,14 +131,14 @@ gd.Blue
 gd.Magenta      
 gd.Cyan         
 gd.White         
-gd.BrightBlack   
-gd.BrightRed    
-gd.BrightGreen   
-gd.BrightYellow  
-gd.BrightBlue    
-gd.BrightMagenta 
-gd.BrightCyan    
-gd.BrightWhite   
+gd.BlackHi   
+gd.RedHi      
+gd.GreenHi     
+gd.YellowHi    
+gd.BlueHi      
+gd.MagentaHi   
+gd.CyanHi     
+gd.WhiteHi     
 
 // Background colors
 gd.BgBlack        
@@ -122,17 +149,17 @@ gd.gd.BgBlue
 gd.BgMagenta       
 gd.BgCyan          
 gd.BgWhite         
-gd.BgBrightBlack   
-gd.BgBrightRed     
-gd.BgBrightGreen   
-gd.BgBrightYellow  
-gd.BgBrightBlue    
-gd.BgBrightMagenta 
-gd.BgBrightCyan    
-gd.BgBrightWhite   
+gd.BgBlackHi     
+gd.BgRedHi       
+gd.BgGreenHi     
+gd.BgYellowHi   
+gd.BgBlueHi     
+gd.BgMagentaHi   
+gd.BgCyanHi      
+gd.BgBWhiteHi     
 
 // Reset to default colors
-gd.ColorReset 
+gd.Reset 
 ```
 ***
 ### FONTS
@@ -153,9 +180,11 @@ gd.Ibmthin
 
 ### MISC
 See ```godoors.go``` for other misc. functions.
+- Configurable idle/exit timer
+- Menu loop
 
 ## TO-DO
-- Time-out if no key press in X mins
+- ~~~Time-out if no key press in X mins~~~
 - ~~Pop-up style window~~
 - ~~Pause sequence (press any key to continue)~~
 - ~~Confirm Y/n prompt~~
