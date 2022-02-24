@@ -452,7 +452,7 @@ func AbsCenterText(s string, l int, w int, h int, c string) {
 	fmt.Fprintf(os.Stdout, WhiteHi+c+s+Reset)
 	result := Continue()
 	if result {
-		fmt.Println(Cyan + CyanHi + " Yes" + Reset)
+		fmt.Println(BgCyan + CyanHi + " Yes" + Reset)
 		time.Sleep(1 * time.Second)
 	}
 	if !result {
