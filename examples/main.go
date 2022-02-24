@@ -10,12 +10,13 @@ import (
 	gd "github.com/robbiew/godoors"
 )
 
-var idle int = 5
+var idle int = 10
 
 func main() {
 
+	// Start the idle timer
 	shortTimer := gd.NewTimer(idle, func() {
-		fmt.Println("\r\nYou've been idle for 2 minutes... exiting!")
+		fmt.Println("\r\nYou've been idle for too long... exiting!")
 		time.Sleep(1 * time.Second)
 		os.Exit(0)
 	})
@@ -72,6 +73,7 @@ func main() {
 
 	for {
 
+		// Stop the idle timer after key press, then re-start it
 		shortTimer.Stop()
 		shortTimer = gd.NewTimer(idle, func() {
 			fmt.Println("\r\nYou've been idle for too long... exiting!")

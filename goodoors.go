@@ -119,6 +119,13 @@ const (
 
 // Continue Y/N
 func Continue() bool {
+	shortTimer := NewTimer(idle, func() {
+		fmt.Println("\r\nYou've been idle for too long... exiting!")
+		time.Sleep(1 * time.Second)
+		os.Exit(0)
+	})
+	defer shortTimer.Stop()
+
 	char, key, err := keyboard.GetKey()
 	if err != nil {
 		panic(err)
@@ -166,7 +173,7 @@ func NewTimer(seconds int, action func()) *time.Timer {
 func Pause() {
 
 	shortTimer := NewTimer(idle, func() {
-		fmt.Println("\r\nYou've been idle for 2 minutes... exiting!")
+		fmt.Println("\r\nYou've been idle for too long... exiting!")
 		time.Sleep(1 * time.Second)
 		os.Exit(0)
 	})
