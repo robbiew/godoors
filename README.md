@@ -72,6 +72,8 @@ gd.Pause()
 gd.Continue()
 ```
 
+> No cancels, Yes does... something else.
+
 ***
 ## POP UP STYLE MODAL
 ```go
