@@ -184,7 +184,7 @@ See [godoors.go](godoors.go) for other misc. functions.
 - Menu loop
 
 ## TO-DO
-- ~~~Time-out if no key press in X mins~~~
+- ~~Time-out if no key press in X mins~~
 - ~~Pop-up style window~~
 - ~~Pause sequence (press any key to continue)~~
 - ~~Confirm Y/n prompt~~
