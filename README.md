@@ -206,7 +206,7 @@ See [godoors.go](godoors.go) for other misc. functions.
 - Configurable idle/exit timer
 - Menu loop
 
-## TO-DO
+## :clipboard: TO-DO
 - ~~Time-out if no key press in X mins~~
 - ~~Pop-up style window~~
 - ~~Pause sequence (press any key to continue)~~
