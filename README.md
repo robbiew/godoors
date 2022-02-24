@@ -40,7 +40,7 @@ go run main.go -path ./
 gd.GetTermSize() (int, int)
 ```
 
-> Tries to detect the user's terminal size. Returns HEIGHT and WIDTH. If it can't detect it, it'll default to 25 and 80.
+> :point_up: Tries to detect the user's terminal size. Returns HEIGHT and WIDTH. If it can't detect it, it'll default to 25 and 80.
 
 ***
 ## DISPLAY ANSI ART
@@ -48,7 +48,7 @@ gd.GetTermSize() (int, int)
 gd.PrintAnsi(file string, delay int) 
 ```
 
-> Pass the valid path of an ANSI art file and it'll strip the SAUCE record, then print it line by line, with an optional delay (in milliseconds, e.g. 40) to simulate slower speeds.
+> :point_up: Pass the valid path of an ANSI art file and it'll strip the SAUCE record, then print it line by line, with an optional delay (in milliseconds, e.g. 40) to simulate slower speeds.
 
 ```go
 
@@ -63,8 +63,8 @@ var (
 	gd.Block       
 )
 ```
-> Variables for printing individual CP437 symbols on the fly, e.g. fmt.Println(SYMBOL) or whatever. (TO-DO: add more!)
-> 
+> :point_up: Variables for printing individual CP437 symbols on the fly, e.g. fmt.Println(SYMBOL) or whatever. (TO-DO: add more!)
+
 ***
 ## DISPLAY SOMETHING AT X,Y COORDINATES
 ```go
@@ -72,7 +72,7 @@ gd.PrintAnsiLoc(file string, x int, y int)
 gd.PrintStringLoc(text string, x int, y int)
 ```
 
-> Same as above, only it'll print the art to the screen at X,Y coordinates, incrementing the Y position after every line. Handy of you need to update the screen with art in a particular location without clearing and re-writing everything.
+> :point_up: Same as above, only it'll print the art to the screen at X,Y coordinates, incrementing the Y position after every line. Handy of you need to update the screen with art in a particular location without clearing and re-writing everything.
 
 ***
 ## PAUSE
@@ -80,7 +80,7 @@ gd.PrintStringLoc(text string, x int, y int)
 gd.Pause()
 ```
 
-> Hit any key 
+> :point_up: Hit any key 
 
 ***
 ## CONTINUE Y/N PROMPT
@@ -88,7 +88,7 @@ gd.Pause()
 gd.Continue()
 ```
 
-> No cancels, Yes does... something else.
+> :point_up: No cancels, Yes does... something else.
 
 ***
 ## POP UP STYLE MODAL
@@ -97,7 +97,7 @@ gd.Modal(text string, l int, w int, h int)
 
 ```
 
-> currently coded to display a background ANSI file with a "Continue? Y/n" prompt/
+> :point_up: currently coded to display a background ANSI file with a "Continue? Y/n" prompt/
 
 ***
 
@@ -107,7 +107,7 @@ gd.AbsCenterText(s string, l int, w int, h int, c string)
 gd.AbsCenterArt(file string, l int, w int, h int) 
 gd.CenterText(s string, w int) 
 ```
-> "absolute center" being both vertically an horizontally centered based in the terminal height and width.
+> :point_up: "absolute center" being both vertically an horizontally centered based in the terminal height and width.
 
 ***
 
