@@ -50,6 +50,19 @@ gd.PrintAnsi(file string, delay int)
 
 > Pass the valid path of an ANSI art file and it'll strip the SAUCE record, then print it line by line, with an optional delay (in milliseconds, e.g. 40) to simulate slower speeds.
 
+```go
+// There are also some codes for printing individual CP437 symbols on the fly, e.g. fmt.Println(SYMBOL) or whatever. (TO-DO: add more!)
+var (
+	gd.Heart        
+	gd.ArrowUpDown  
+	gd.ArrowUp      
+	gd.ArrowDown   
+	gd.ArrowDownFat 
+	gd.ArrowRight  
+	gd.ArrowLeft    
+	gd.Block       
+)
+
 ***
 ## DISPLAY SOMETHING AT X,Y COORDINATES
 ```go
