@@ -4,6 +4,9 @@ Helpful library for creating linux-based door applications (like games and utili
 
 If you're not already running linux-based BBS software like [Talisman](https://talismanbbs.com/), [Mystic](http://mysticbbs.com/downloads.html), [Synchronet](https://wiki.synchro.net/install:nix), [ENiGMA½](https://enigma-bbs.github.io/) or [WWIV](https://github.com/wwivbbs/wwiv), then this library probably isn't for you.
 
+----
+![Example utilities from examples/examples.go](examples/screenshot/screenshot.png "Example utilities from examples/examples.go") 
+
 ## Install
 ```go
 go get github.com/robbiew/godoors
