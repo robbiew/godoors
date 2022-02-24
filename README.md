@@ -45,10 +45,10 @@ gd.GetTermSize() (int, int)
 ***
 ## DISPLAY ANSI ART
 ```go
-gd.PrintAnsi(file string)
+gd.PrintAnsi(file string, delay int) 
 ```
 
-> Pass the valid path of an ANSI art file and it'll strip the SAUCE record, then print it line by line, with an optional delay to simulate slower speeds.
+> Pass the valid path of an ANSI art file and it'll strip the SAUCE record, then print it line by line, with an optional delay (in milliseconds, e.g. 40) to simulate slower speeds.
 
 ***
 ## DISPLAY SOMETHING AT X,Y COORDINATES
