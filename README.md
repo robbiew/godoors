@@ -6,7 +6,7 @@ If you're not already running linux-based BBS software like [Talisman](https://t
 
 ----
 ![Example utilities from examples/examples.go](screenshot/screenshot1.png "Example utilities from examples/examples.go") 
-> :point_up: Screenshot of the included [example](examples/examples.go) program to test some of the functions
+> :point_up: Screenshot of [example](https://github.com/robbiew/godoors-example) program to test some of the functions
 
 ## INSTALL
 ```go
