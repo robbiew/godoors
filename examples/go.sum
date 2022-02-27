@@ -1,8 +1,13 @@
 github.com/eiannone/keyboard v0.0.0-20200508000154-caf4b762e807 h1:jdjd5e68T4R/j4PWxfZqcKY8KtT9oo8IPNVuV4bSXDQ=
 github.com/eiannone/keyboard v0.0.0-20200508000154-caf4b762e807/go.mod h1:Xoiu5VdKMvbRgHuY7+z64lhu/7lvax/22nzASF6GrO8=
-github.com/robbiew/godoors v0.0.0-20220224011934-7b7ebd88b81f h1:KTkeSaOqdgXUpIIFmIzsKEoi6MDovxZu7AB5PO/rHSQ=
-github.com/robbiew/godoors v0.0.0-20220224011934-7b7ebd88b81f/go.mod h1:BwGR20eA8UHPzBvZGvEHUy3pgQAI406uefS6BzajnTM=
-golang.org/x/sys v0.0.0-20220223155357-96fed51e1446 h1:ka7ppF8KGOfo7t8LOHIzmMPoZCQwgTBuW6nvSxYC84c=
+github.com/mattn/go-gtk v0.0.0-20191030024613-af2e013261f5 h1:GMB3MVJnxysGrSvjWGsgK8L3XGI3F4etQQq37Py6W5A=
+github.com/mattn/go-gtk v0.0.0-20191030024613-af2e013261f5/go.mod h1:PwzwfeB5syFHXORC3MtPylVcjIoTDT/9cvkKpEndGVI=
+github.com/mattn/go-sixel v0.0.1 h1:rhJSpux2xjsmXdXqY694uiEC0Rwxt6jYoq7Bahqo2xs=
+github.com/mattn/go-sixel v0.0.1/go.mod h1:zlzhYSuMbLdRdrxfutExxGpC+Pf2uUTJ6GpVQ4LB5dc=
+github.com/robbiew/godoors v0.0.0-20220224030112-ced2d32a3e0a h1:FG82uN5B5JlDmmsTHpitRGUmLSnhHnOt4DlZYqxAlew=
+github.com/robbiew/godoors v0.0.0-20220224030112-ced2d32a3e0a/go.mod h1:BwGR20eA8UHPzBvZGvEHUy3pgQAI406uefS6BzajnTM=
+github.com/soniakeys/quant v1.0.0 h1:N1um9ktjbkZVcywBVAAYpZYSHxEfJGzshHCxx/DaI0Y=
+github.com/soniakeys/quant v1.0.0/go.mod h1:HI1k023QuVbD4H8i9YdfZP2munIHU4QpjsImz6Y6zds=
 golang.org/x/sys v0.0.0-20220223155357-96fed51e1446/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20220224003255-dbe011f71a99 h1:Us899Z5PCfOrSgeCYWobI1/bSigAz9Rhf8+fz5Grkzc=
 golang.org/x/sys v0.0.0-20220224003255-dbe011f71a99/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=

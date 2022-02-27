@@ -16,9 +16,6 @@ import (
 	"github.com/eiannone/keyboard"
 )
 
-// seconds until time-out
-var Idle int = 180
-
 // CREDIT TO https://github.com/k0kubun/go-ansi for some of these sequences.
 
 const (
@@ -116,6 +113,31 @@ const (
 
 	Reset = Esc + "0m"
 )
+
+type User struct {
+	Alias     string
+	TimeLeft  int
+	Emulation int
+	NodeNum   int
+	H         int
+	W         int
+}
+
+// Get info from the Drop File, h, w
+func Initialize(path string) User {
+
+	alias, timeLeft, emulation, nodeNum := DropFileData(path)
+	h, w := GetTermSize()
+	u := User{
+		Alias:     alias,
+		TimeLeft:  timeLeft,
+		Emulation: emulation,
+		NodeNum:   nodeNum,
+		H:         h,
+		W:         w,
+	}
+	return u
+}
 
 // Continue Y/N
 func Continue() bool {
@@ -360,6 +382,8 @@ func GetTermSize() (int, int) {
 		}
 		h := ih
 		w := iw
+
+		ClearScreen()
 
 		return h, w
 
