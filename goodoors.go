@@ -114,6 +114,8 @@ const (
 	Reset = Esc + "0m"
 )
 
+var Idle int
+
 type User struct {
 	Alias     string
 	TimeLeft  int
