@@ -184,9 +184,9 @@ func Continue() bool {
 	return x
 }
 
-func Modal(artPath string, text string, l int, mw int, mh int) {
-	AbsCenterArt(artPath, 33, mw, mh)
-	AbsCenterText(text, l, mw, mh, BgCyan)
+func Modal(artPath string, text string, l int) {
+	AbsCenterArt(artPath, 33)
+	AbsCenterText(text, l, BgCyan)
 }
 
 func TruncateText(s string, max int) string {
@@ -490,10 +490,10 @@ func CenterText(s string, w int) {
 }
 
 // Horizontally and Vertically center some text.
-func AbsCenterText(s string, l int, mw int, mh int, c string) {
-	centerY := mh / 2
+func AbsCenterText(s string, l int, c string) {
+	centerY := tempModalH / 2
 	halfLen := l / 2
-	centerX := (mw - mw/2) - halfLen
+	centerX := (tempModalW - tempModalW/2) - halfLen
 	MoveCursor(centerX, centerY)
 	fmt.Fprintf(os.Stdout, WhiteHi+c+s+Reset)
 	result := Continue()
