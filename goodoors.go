@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
 	"os/exec"
 	"regexp"
@@ -471,10 +472,10 @@ func CenterText(s string, w int) {
 
 // Horizontally and Vertically center some text.
 func AbsCenterText(s string, l int, w int, h int, c string) {
-	centerY := h / 2
-	halfLen := l / 2
-	centerX := (w - w/2) - halfLen
-	MoveCursor(centerX, centerY)
+	centerY := math.Round(float64(h / 2))
+	halfLen := float64(l / 2)
+	centerX := float64(w-w/2) - halfLen
+	MoveCursor(int(centerX), int(centerY))
 	fmt.Fprintf(os.Stdout, WhiteHi+c+s+Reset)
 	result := Continue()
 	if result {
