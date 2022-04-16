@@ -47,8 +47,8 @@ var (
 	ArrowLeft    = string([]rune{'\u0011'})
 	Block        = string([]rune{'\u0219'})
 
-	tempModalH int
-	tempModalW int
+	modalH int // in case height is odd
+	modalW int // in case width is odd
 )
 
 // Common ANSI escapes sequences. These should be used when the desired action
@@ -137,15 +137,15 @@ func Initialize(path string) User {
 	h, w := GetTermSize()
 
 	if h%2 == 0 {
-		tempModalH = h
+		modalH = h
 	} else {
-		tempModalH = h - 1
+		modalH = h - 1
 	}
 
 	if w%2 == 0 {
-		tempModalW = w
+		modalW = w
 	} else {
-		tempModalW = w - 1
+		modalW = w - 1
 	}
 
 	u := User{
@@ -155,8 +155,8 @@ func Initialize(path string) User {
 		NodeNum:   nodeNum,
 		H:         h,
 		W:         w,
-		ModalH:    tempModalH,
-		ModalW:    tempModalW,
+		ModalH:    modalH,
+		ModalW:    modalW,
 	}
 	return u
 }
@@ -491,9 +491,9 @@ func CenterText(s string, w int) {
 
 // Horizontally and Vertically center some text.
 func AbsCenterText(s string, l int, c string) {
-	centerY := tempModalH / 2
+	centerY := modalH / 2
 	halfLen := l / 2
-	centerX := (tempModalW - tempModalW/2) - halfLen
+	centerX := (modalW - modalW/2) - halfLen
 	MoveCursor(centerX, centerY)
 	fmt.Fprintf(os.Stdout, WhiteHi+c+s+Reset)
 	result := Continue()
@@ -508,9 +508,9 @@ func AbsCenterText(s string, l int, c string) {
 }
 
 func AbsCenterArt(file string, l int) {
-	artY := (tempModalH / 2) - 2
+	artY := (modalH / 2) - 2
 	artLen := l / 2
-	artX := (tempModalW - tempModalW/2) - artLen
+	artX := (modalW - modalW/2) - artLen
 
 	content, err := ioutil.ReadFile(file)
 	if err != nil {
