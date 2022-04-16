@@ -164,8 +164,8 @@ func Continue() bool {
 	return x
 }
 
-func Modal(text string, l int, w int, h int) {
-	AbsCenterArt("modalBg.ans", 33, w, h)
+func Modal(artPath string, text string, l int, w int, h int) {
+	AbsCenterArt(artPath, 33, w, h)
 	AbsCenterText(text, l, w, h, BgCyan)
 }
 
