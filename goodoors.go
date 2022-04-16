@@ -507,10 +507,10 @@ func AbsCenterText(s string, l int, mw int, mh int, c string) {
 	}
 }
 
-func AbsCenterArt(file string, l int, mw int, mh int) {
-	artY := (mh / 2) - 2
+func AbsCenterArt(file string, l int) {
+	artY := (tempModalH / 2) - 2
 	artLen := l / 2
-	artX := (mw - mw/2) - artLen
+	artX := (tempModalW - tempModalW/2) - artLen
 
 	content, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -519,8 +519,6 @@ func AbsCenterArt(file string, l int, mw int, mh int) {
 
 	noSauce := TrimStringFromSauce(string(content)) // strip off the SAUCE metadata
 	s := bufio.NewScanner(strings.NewReader(string(noSauce)))
-
-	fmt.Println(mw, mh)
 
 	for s.Scan() {
 		fmt.Fprintf(os.Stdout, Esc+strconv.Itoa(artY)+";"+strconv.Itoa(artX)+"f")
