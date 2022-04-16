@@ -522,7 +522,7 @@ func AbsCenterArt(file string, l int, mw int, mh int) {
 
 	for s.Scan() {
 		fmt.Fprintf(os.Stdout, Esc+strconv.Itoa(artY)+";"+strconv.Itoa(artX)+"f")
-		fmt.Println(s.Text())
+		fmt.Fprintf(os.Stdout, s.Text())
 		artY++
 	}
 
