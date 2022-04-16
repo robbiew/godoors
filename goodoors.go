@@ -520,9 +520,11 @@ func AbsCenterArt(file string, l int, mw int, mh int) {
 	noSauce := TrimStringFromSauce(string(content)) // strip off the SAUCE metadata
 	s := bufio.NewScanner(strings.NewReader(string(noSauce)))
 
+	fmt.Println(mw, mh)
+
 	for s.Scan() {
 		fmt.Fprintf(os.Stdout, Esc+strconv.Itoa(artY)+";"+strconv.Itoa(artX)+"f")
-		fmt.Fprintf(os.Stdout, s.Text())
+		fmt.Println(s.Text())
 		artY++
 	}
 
