@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"math"
 	"os"
 	"os/exec"
 	"regexp"
@@ -47,6 +46,9 @@ var (
 	ArrowRight   = string([]rune{'\u0010'})
 	ArrowLeft    = string([]rune{'\u0011'})
 	Block        = string([]rune{'\u0219'})
+
+	tempModalH int
+	tempModalW int
 )
 
 // Common ANSI escapes sequences. These should be used when the desired action
@@ -124,6 +126,8 @@ type User struct {
 	NodeNum   int
 	H         int
 	W         int
+	ModalH    int
+	ModalW    int
 }
 
 // Get info from the Drop File, h, w
@@ -131,6 +135,19 @@ func Initialize(path string) User {
 
 	alias, timeLeft, emulation, nodeNum := DropFileData(path)
 	h, w := GetTermSize()
+
+	if h%2 == 0 {
+		tempModalH = h
+	} else {
+		tempModalH = h - 1
+	}
+
+	if w%2 == 0 {
+		tempModalW = w
+	} else {
+		tempModalW = w - 1
+	}
+
 	u := User{
 		Alias:     alias,
 		TimeLeft:  timeLeft,
@@ -138,6 +155,8 @@ func Initialize(path string) User {
 		NodeNum:   nodeNum,
 		H:         h,
 		W:         w,
+		ModalH:    tempModalH,
+		ModalW:    tempModalW,
 	}
 	return u
 }
@@ -472,10 +491,10 @@ func CenterText(s string, w int) {
 
 // Horizontally and Vertically center some text.
 func AbsCenterText(s string, l int, w int, h int, c string) {
-	centerY := math.Round(float64(h / 2))
-	halfLen := float64(l / 2)
-	centerX := float64(w-w/2) - halfLen
-	MoveCursor(int(centerX), int(centerY))
+	centerY := h / 2
+	halfLen := l / 2
+	centerX := (w - w/2) - halfLen
+	MoveCursor(centerX, centerY)
 	fmt.Fprintf(os.Stdout, WhiteHi+c+s+Reset)
 	result := Continue()
 	if result {
