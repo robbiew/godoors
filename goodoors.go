@@ -517,8 +517,8 @@ func AbsCenterArt(file string, l int) {
 		log.Fatal(err)
 	}
 
-	noSauce := TrimStringFromSauce(string(content)) // strip off the SAUCE metadata
-	s := bufio.NewScanner(strings.NewReader(string(noSauce)))
+	// noSauce := TrimStringFromSauce(string(content)) // strip off the SAUCE metadata
+	s := bufio.NewScanner(strings.NewReader(string(content)))
 
 	for s.Scan() {
 		fmt.Fprintf(os.Stdout, Esc+strconv.Itoa(artY)+";"+strconv.Itoa(artX)+"f")
