@@ -467,8 +467,8 @@ func PrintAnsiLoc(artfile string, x int, y int) {
 	s := bufio.NewScanner(strings.NewReader(string(artfile)))
 
 	for s.Scan() {
-		fmt.Println("\x1b[" + strconv.Itoa(yLoc) + ";" + strconv.Itoa(x) + "f")
-		fmt.Println(s.Text())
+		fmt.Fprintf(os.Stdout, "\x1b["+strconv.Itoa(yLoc)+";"+strconv.Itoa(x)+"f")
+		fmt.Fprintf(os.Stdout, s.Text())
 		yLoc++
 	}
 }
