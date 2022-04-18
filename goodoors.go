@@ -3,7 +3,6 @@ package godoors
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -419,13 +418,9 @@ func GetTermSize() (int, int) {
 
 }
 
-func PrintAnsi(file string, delay int) {
-	content, err := ioutil.ReadFile(file)
-	if err != nil {
-		log.Fatal(err)
-	}
+func PrintAnsi(artfile string, delay int) {
+	noSauce := TrimStringFromSauce(artfile) // strip off the SAUCE metadata
 
-	noSauce := TrimStringFromSauce(string(content)) // strip off the SAUCE metadata
 	s := bufio.NewScanner(strings.NewReader(string(noSauce)))
 
 	for s.Scan() {
@@ -509,8 +504,9 @@ func AbsCenterArt(artfile string, l int) {
 	artLen := l / 2
 	artX := (modalW - modalW/2) - artLen
 
-	// noSauce := TrimStringFromSauce(string(file)) // strip off the SAUCE metadata
-	s := bufio.NewScanner(strings.NewReader(string(artfile)))
+	noSauce := TrimStringFromSauce(artfile) // strip off the SAUCE metadata
+
+	s := bufio.NewScanner(strings.NewReader(string(noSauce)))
 
 	for s.Scan() {
 		fmt.Fprintf(os.Stdout, Esc+strconv.Itoa(artY)+";"+strconv.Itoa(artX)+"f")
