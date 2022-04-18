@@ -461,14 +461,10 @@ func TrimLastChar(s string) string {
 	return s[:len(s)-size]
 }
 
-func PrintAnsiLoc(file string, x int, y int) {
+func PrintAnsiLoc(artfile string, x int, y int) {
 	yLoc := y
-	content, err := ioutil.ReadFile(file)
-	if err != nil {
-		log.Fatal(err)
-	}
 
-	noSauce := TrimStringFromSauce(string(content)) // strip off the SAUCE metadata
+	noSauce := TrimStringFromSauce(string(artfile)) // strip off the SAUCE metadata
 	s := bufio.NewScanner(strings.NewReader(string(noSauce)))
 
 	for s.Scan() {
@@ -520,7 +516,6 @@ func AbsCenterArt(artfile string, l int) {
 		fmt.Println(s.Text())
 		artY++
 	}
-
 }
 
 // Credit to @richorr
