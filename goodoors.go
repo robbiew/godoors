@@ -464,11 +464,13 @@ func TrimLastChar(s string) string {
 func PrintAnsiLoc(artfile string, x int, y int) {
 	yLoc := y
 
-	s := bufio.NewScanner(strings.NewReader(string(artfile)))
+	noSauce := TrimStringFromSauce(artfile) // strip off the SAUCE metadata
+
+	s := bufio.NewScanner(strings.NewReader(string(noSauce)))
 
 	for s.Scan() {
 		fmt.Fprintf(os.Stdout, "\x1b["+strconv.Itoa(yLoc)+";"+strconv.Itoa(x)+"f")
-		fmt.Fprintf(os.Stdout, s.Text())
+		fmt.Println(s.Text())
 		yLoc++
 	}
 }
