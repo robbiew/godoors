@@ -469,8 +469,8 @@ func PrintAnsiLoc(artfile string, x int, y int) {
 
 // Print text at an X, Y location
 func PrintStringLoc(text string, x int, y int) {
-	fmt.Println(Esc + strconv.Itoa(y) + ";" + strconv.Itoa(x) + "f")
-	fmt.Println(text)
+	fmt.Fprintf(os.Stdout, Esc+strconv.Itoa(y)+";"+strconv.Itoa(x)+"f"+text)
+
 }
 
 // Horizontally center some text.
