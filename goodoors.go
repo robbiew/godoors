@@ -426,7 +426,6 @@ func PrintAnsi(artfile string, delay int) {
 		fmt.Println(s.Text())
 		time.Sleep(time.Duration(delay) * time.Millisecond)
 	}
-
 }
 
 func TrimStringFromSauce(s string) string {
@@ -463,7 +462,7 @@ func PrintAnsiLoc(artfile string, x int, y int) {
 
 	for s.Scan() {
 		fmt.Fprintf(os.Stdout, Esc+strconv.Itoa(yLoc)+";"+strconv.Itoa(x)+"f")
-		fmt.Println(s.Text())
+		fmt.Fprintf(os.Stdout, s.Text())
 		yLoc++
 	}
 }
