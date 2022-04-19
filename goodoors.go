@@ -420,7 +420,6 @@ func GetTermSize() (int, int) {
 
 func PrintAnsi(artfile string, delay int) {
 	noSauce := TrimStringFromSauce(artfile) // strip off the SAUCE metadata
-
 	s := bufio.NewScanner(strings.NewReader(string(noSauce)))
 
 	for s.Scan() {
@@ -460,11 +459,10 @@ func PrintAnsiLoc(artfile string, x int, y int) {
 	yLoc := y
 
 	noSauce := TrimStringFromSauce(artfile) // strip off the SAUCE metadata
-
 	s := bufio.NewScanner(strings.NewReader(string(noSauce)))
 
 	for s.Scan() {
-		fmt.Fprintf(os.Stdout, "\x1b["+strconv.Itoa(yLoc)+";"+strconv.Itoa(x)+"f")
+		fmt.Fprintf(os.Stdout, Esc+strconv.Itoa(yLoc)+";"+strconv.Itoa(x)+"f")
 		fmt.Println(s.Text())
 		yLoc++
 	}
@@ -472,7 +470,7 @@ func PrintAnsiLoc(artfile string, x int, y int) {
 
 // Print text at an X, Y location
 func PrintStringLoc(text string, x int, y int) {
-	fmt.Println("\x1b[" + strconv.Itoa(y) + ";" + strconv.Itoa(x) + "f")
+	fmt.Println(Esc + strconv.Itoa(y) + ";" + strconv.Itoa(x) + "f")
 	fmt.Println(text)
 }
 
@@ -505,7 +503,6 @@ func AbsCenterArt(artfile string, l int) {
 	artX := (modalW - modalW/2) - artLen
 
 	noSauce := TrimStringFromSauce(artfile) // strip off the SAUCE metadata
-
 	s := bufio.NewScanner(strings.NewReader(string(noSauce)))
 
 	for s.Scan() {
