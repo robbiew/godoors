@@ -429,6 +429,9 @@ func PrintAnsi(artfile string, delay int, height int) {
 		time.Sleep(time.Duration(delay) * time.Millisecond)
 		if i < height {
 			fmt.Fprintf(os.Stdout, "\r\n")
+		} else {
+			MoveCursor(0, 0)
+			break
 		}
 		i++
 	}
