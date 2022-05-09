@@ -422,9 +422,13 @@ func PrintAnsi(artfile string, delay int) {
 	noSauce := TrimStringFromSauce(artfile) // strip off the SAUCE metadata
 	s := bufio.NewScanner(strings.NewReader(string(noSauce)))
 
+	i := 1
+
 	for s.Scan() {
-		fmt.Println(s.Text())
-		time.Sleep(time.Duration(delay) * time.Millisecond)
+		if i < 37 {
+			fmt.Println(s.Text())
+			time.Sleep(time.Duration(delay) * time.Millisecond)
+		}
 	}
 }
 
