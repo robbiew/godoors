@@ -418,15 +418,19 @@ func GetTermSize() (int, int) {
 
 }
 
-func PrintAnsi(artfile string, delay int) {
+func PrintAnsi(artfile string, delay int, height int) {
 	noSauce := TrimStringFromSauce(artfile) // strip off the SAUCE metadata
 	s := bufio.NewScanner(strings.NewReader(string(noSauce)))
 
-	for s.Scan() {
+	i := 1
 
+	for s.Scan() {
 		fmt.Fprintf(os.Stdout, s.Text())
 		time.Sleep(time.Duration(delay) * time.Millisecond)
-
+		if i < height {
+			fmt.Println("")
+		}
+		i++
 	}
 }
 
