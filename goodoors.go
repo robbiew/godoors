@@ -3,7 +3,6 @@ package godoors
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -130,10 +129,14 @@ type User struct {
 	ModalW    int
 }
 
-// Get info from the Drop File, h, w
-func Initialize(path string) User {
+// Initialize reads the drop file at path and probes the terminal, returning a
+// populated User. It returns an error if the drop file can't be read or parsed.
+func Initialize(path string) (User, error) {
 
-	alias, timeLeft, emulation, nodeNum := DropFileData(path)
+	alias, timeLeft, emulation, nodeNum, err := DropFileData(path)
+	if err != nil {
+		return User{}, err
+	}
 	h, w := GetTermSize()
 
 	if h%2 == 0 {
@@ -158,7 +161,7 @@ func Initialize(path string) User {
 		ModalH:    modalH,
 		ModalW:    modalW,
 	}
-	return u
+	return u, nil
 }
 
 // Continue Y/N
@@ -316,74 +319,60 @@ func openDropFile(dir string) (*os.File, error) {
 	return nil, err
 }
 
-func DropFileData(path string) (string, int, int, int) {
-	var dropAlias string
-	var dropTimeLeft string
-	var dropEmulation string
-	var nodeNum string
-
+// DropFileData reads a door32.sys drop file from the given directory and
+// returns the user's alias, time left (minutes), emulation type (0 = ASCII,
+// 1 = ANSI) and node number. Any I/O or parse failure is returned as an error
+// so the caller can decide how to handle it, rather than terminating the host.
+func DropFileData(path string) (alias string, timeLeft, emulation, node int, err error) {
 	file, err := openDropFile(path)
 	if err != nil {
-		log.Fatal(err)
+		return "", 0, 0, 0, err
 	}
+	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
 	scanner.Split(bufio.ScanLines)
 	var text []string
-
 	for scanner.Scan() {
 		text = append(text, scanner.Text())
 	}
-
-	file.Close()
-
-	count := 0
-	for _, line := range text {
-		if count == 6 {
-			dropAlias = line
-		}
-		if count == 8 {
-			dropTimeLeft = line
-		}
-		if count == 9 {
-			dropEmulation = line
-		}
-		if count == 10 {
-			nodeNum = line
-		}
-		if count == 11 {
-			break
-		}
-		count++
-	}
 	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
+		return "", 0, 0, 0, fmt.Errorf("reading drop file: %w", err)
 	}
 
-	timeInt, err := strconv.Atoi(dropTimeLeft) // return as int
-	if err != nil {
-		log.Fatal(err)
+	// door32.sys is line-oriented; the fields we need live at fixed indexes.
+	const (
+		aliasLine     = 6
+		timeLeftLine  = 8
+		emulationLine = 9
+		nodeLine      = 10
+	)
+	if len(text) <= nodeLine {
+		return "", 0, 0, 0, fmt.Errorf("drop file has %d lines, need at least %d", len(text), nodeLine+1)
 	}
 
-	emuInt, err := strconv.Atoi(dropEmulation) // return as int
-	if err != nil {
-		log.Fatal(err)
+	alias = text[aliasLine]
+	if timeLeft, err = strconv.Atoi(text[timeLeftLine]); err != nil {
+		return "", 0, 0, 0, fmt.Errorf("parsing time left: %w", err)
 	}
-	nodeInt, err := strconv.Atoi(nodeNum) // return as int
-	if err != nil {
-		log.Fatal(err)
+	if emulation, err = strconv.Atoi(text[emulationLine]); err != nil {
+		return "", 0, 0, 0, fmt.Errorf("parsing emulation: %w", err)
 	}
-
-	return dropAlias, timeInt, emuInt, nodeInt
+	if node, err = strconv.Atoi(text[nodeLine]); err != nil {
+		return "", 0, 0, 0, fmt.Errorf("parsing node number: %w", err)
+	}
+	return alias, timeLeft, emulation, node, nil
 }
 
-/*
-Get the terminal size
-- Send a cursor position that we know is way too large
-- Terminal sends back the largest row + col size
-- Read in the result
-*/
+// GetTermSize detects the connected terminal's size by parking the cursor far
+// past any real screen and reading back the clamped cursor-position report.
+// It returns height (rows) and width (columns). If the terminal can't be
+// probed or the reply can't be parsed, it falls back to the classic 25x80.
 func GetTermSize() (int, int) {
+	const (
+		defaultH = 25
+		defaultW = 80
+	)
 	// Set the terminal to raw mode so we aren't waiting for CLRF rom user (to be undone with `-raw`)
 	rawMode := exec.Command("/bin/stty", "raw")
 	rawMode.Stdin = os.Stdin
@@ -408,21 +397,12 @@ func GetTermSize() (int, int) {
 		s := strings.Split(line, ";")
 		sh, sw := s[0], s[1]
 
-		ih, err := strconv.Atoi(sh)
-		if err != nil {
-			// handle error
-			fmt.Println(err)
-			os.Exit(2)
+		h, herr := strconv.Atoi(sh)
+		w, werr := strconv.Atoi(sw)
+		if herr != nil || werr != nil {
+			// Unparseable reply: fall back rather than kill the host door.
+			return defaultH, defaultW
 		}
-
-		iw, err := strconv.Atoi(sw)
-		if err != nil {
-			// handle error
-			fmt.Println(err)
-			os.Exit(2)
-		}
-		h := ih
-		w := iw
 
 		ClearScreen()
 
@@ -431,10 +411,7 @@ func GetTermSize() (int, int) {
 	} else {
 		// couldn't detect, so fall back to the classic 80x25 terminal:
 		// 25 rows (height) by 80 columns (width).
-		h := 25
-		w := 80
-
-		return h, w
+		return defaultH, defaultW
 	}
 
 }
@@ -542,17 +519,12 @@ func AbsCenterArt(artfile string, l int) {
 
 // Credit to @richorr
 func PipeColorToEscCode(ansiColor string) (string, bool) {
-
-	log.Println("checking string == " + ansiColor)
-
 	if len(strings.Trim(ansiColor, " ")) < 2 {
-		log.Println("finding no string")
 		return "", false
 	}
 	tint := ""
 	isColor := true
 
-	log.Println("finding a string")
 	switch ansiColor[0] {
 	case '0':
 		tint = BgBlack
@@ -633,11 +605,9 @@ func PipeColorToEscCode(ansiColor string) (string, bool) {
 
 func PrintPipeColor(text string, defaultTint string) string {
 	tint := defaultTint
-	// log.Println("Text: ", text)
 
 	coloredSections := strings.Split(text, "|")
 	for i, ansiBlock := range coloredSections {
-		log.Println("Ansi Block @", strconv.Itoa(i), ": [", ansiBlock, "]")
 		if len(strings.Trim(ansiBlock, " ")) < 2 {
 			if i == 0 {
 				fmt.Print(tint, ansiBlock, Reset)
