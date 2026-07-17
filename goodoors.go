@@ -223,7 +223,7 @@ func Pause() {
 	})
 	defer shortTimer.Stop()
 
-	fmt.Fprintf(os.Stdout, "\r\nPrEsS a KeY")
+	fmt.Fprint(os.Stdout, "\r\nPrEsS a KeY")
 	_, _, err := keyboard.GetKey()
 	if err != nil {
 		panic(err)
@@ -378,10 +378,10 @@ func DropFileData(path string) (string, int, int, int) {
 }
 
 /*
-	Get the terminal size
-	- Send a cursor position that we know is way too large
-	- Terminal sends back the largest row + col size
-	- Read in the result
+Get the terminal size
+- Send a cursor position that we know is way too large
+- Terminal sends back the largest row + col size
+- Read in the result
 */
 func GetTermSize() (int, int) {
 	// Set the terminal to raw mode so we aren't waiting for CLRF rom user (to be undone with `-raw`)
@@ -429,9 +429,10 @@ func GetTermSize() (int, int) {
 		return h, w
 
 	} else {
-		// couldn't detect, so let's just set 80 x 25 to be safe
-		h := 80
-		w := 25
+		// couldn't detect, so fall back to the classic 80x25 terminal:
+		// 25 rows (height) by 80 columns (width).
+		h := 25
+		w := 80
 
 		return h, w
 	}
@@ -445,10 +446,10 @@ func PrintAnsi(artfile string, delay int, height int) {
 	i := 1
 
 	for s.Scan() {
-		fmt.Fprintf(os.Stdout, s.Text())
+		fmt.Fprint(os.Stdout, s.Text())
 		time.Sleep(time.Duration(delay) * time.Millisecond)
 		if i < height {
-			fmt.Fprintf(os.Stdout, "\r\n")
+			fmt.Fprint(os.Stdout, "\r\n")
 		} else {
 			MoveCursor(0, 0)
 			break
@@ -490,20 +491,20 @@ func PrintAnsiLoc(artfile string, x int, y int) {
 	s := bufio.NewScanner(strings.NewReader(string(noSauce)))
 
 	for s.Scan() {
-		fmt.Fprintf(os.Stdout, Esc+strconv.Itoa(yLoc)+";"+strconv.Itoa(x)+"f"+s.Text())
+		fmt.Fprint(os.Stdout, Esc+strconv.Itoa(yLoc)+";"+strconv.Itoa(x)+"f"+s.Text())
 		yLoc++
 	}
 }
 
 // Print text at an X, Y location
 func PrintStringLoc(text string, x int, y int) {
-	fmt.Fprintf(os.Stdout, Esc+strconv.Itoa(y)+";"+strconv.Itoa(x)+"f"+text)
+	fmt.Fprint(os.Stdout, Esc+strconv.Itoa(y)+";"+strconv.Itoa(x)+"f"+text)
 
 }
 
 // Horizontally center some text.
 func CenterText(s string, w int) {
-	fmt.Fprintf(os.Stdout, (fmt.Sprintf("%[1]*s", -w, fmt.Sprintf("%[1]*s", (w+len(s))/2, s))))
+	fmt.Fprint(os.Stdout, fmt.Sprintf("%[1]*s", -w, fmt.Sprintf("%[1]*s", (w+len(s))/2, s)))
 }
 
 // Horizontally and Vertically center some text.
@@ -512,14 +513,14 @@ func AbsCenterText(s string, l int, c string) {
 	halfLen := l / 2
 	centerX := (modalW - modalW/2) - halfLen
 	MoveCursor(centerX, centerY)
-	fmt.Fprintf(os.Stdout, WhiteHi+c+s+Reset)
+	fmt.Fprint(os.Stdout, WhiteHi+c+s+Reset)
 	result := Continue()
 	if result {
-		fmt.Fprintf(os.Stdout, BgCyan+CyanHi+" Yes"+Reset)
+		fmt.Fprint(os.Stdout, BgCyan+CyanHi+" Yes"+Reset)
 		time.Sleep(1 * time.Second)
 	}
 	if !result {
-		fmt.Fprintf(os.Stdout, BgCyan+CyanHi+" No"+Reset)
+		fmt.Fprint(os.Stdout, BgCyan+CyanHi+" No"+Reset)
 		time.Sleep(1 * time.Second)
 	}
 }
