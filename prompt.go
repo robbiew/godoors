@@ -1,0 +1,67 @@
+package godoors
+
+import (
+	"fmt"
+	"os"
+	"time"
+
+	"github.com/eiannone/keyboard"
+)
+
+var Idle int
+
+// startIdleTimer arms the idle-boot timer when Idle is configured (> 0),
+// returning a stop function that is always safe to defer. When Idle is 0 or
+// negative the timer is disabled, so a caller who never sets Idle is not
+// booted the instant they hit a prompt.
+func startIdleTimer() func() {
+	if Idle <= 0 {
+		return func() {}
+	}
+	t := NewTimer(Idle, func() {
+		fmt.Println("\r\nYou've been idle for too long... exiting!")
+		time.Sleep(1 * time.Second)
+		os.Exit(0)
+	})
+	return func() { t.Stop() }
+}
+
+// Continue reads a single key and reports whether the user chose to proceed.
+// Y/y/Enter mean yes; N/n/Esc mean no; any other key re-prompts. If the
+// keyboard can't be read it returns false rather than crashing the door.
+func Continue() bool {
+	defer startIdleTimer()()
+
+	for {
+		char, key, err := keyboard.GetKey()
+		if err != nil {
+			return false
+		}
+		switch {
+		case string(char) == "Y" || string(char) == "y" || key == keyboard.KeyEnter:
+			return true
+		case string(char) == "N" || string(char) == "n" || key == keyboard.KeyEsc:
+			return false
+		}
+	}
+}
+
+// NewTimer boots a user after being idle too long
+func NewTimer(seconds int, action func()) *time.Timer {
+	timer := time.NewTimer(time.Second * time.Duration(seconds))
+
+	go func() {
+		<-timer.C
+		action()
+	}()
+	return timer
+}
+
+// Pause prints a prompt and waits for a single key press. A keyboard read
+// error is ignored so a failing terminal can't crash the door.
+func Pause() {
+	defer startIdleTimer()()
+
+	fmt.Fprint(os.Stdout, "\r\nPrEsS a KeY")
+	_, _, _ = keyboard.GetKey()
+}
