@@ -216,8 +216,14 @@ gd.Ibmthin
 ## IDLE TIMER
 ```go
 gd.Idle = 120 // seconds; 0 disables the timeout
+
+// Optional: override what happens on timeout (default prints a notice and exits)
+gd.IdleAction = func() {
+    myCleanup()
+    os.Exit(0)
+}
 ```
-> :point_up: Set the package-level `gd.Idle` (in seconds) before calling `gd.Pause`/`gd.Continue`. When the user idles at a prompt longer than this, the door prints a message and exits. Leave it at `0` to disable — the timer is only armed when `gd.Idle > 0`.
+> :point_up: Set the package-level `gd.Idle` (in seconds) before calling `gd.Pause`/`gd.Continue`. When the user idles at a prompt longer than this, `gd.IdleAction` runs — by default it prints a message and exits so the BBS can reclaim the node. Override `gd.IdleAction` to run your own cleanup/logging (or a non-terminating handler). Leave `gd.Idle` at `0` to disable — the timer is only armed when `gd.Idle > 0`.
 
 ## MISC
 See [godoors.go](godoors.go) for other misc. functions.

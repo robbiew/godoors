@@ -8,21 +8,29 @@ import (
 	"github.com/eiannone/keyboard"
 )
 
+// Idle is the number of seconds a user may sit at a Pause/Continue prompt
+// before IdleAction fires. A value of 0 (or negative) disables the timeout.
 var Idle int
 
-// startIdleTimer arms the idle-boot timer when Idle is configured (> 0),
-// returning a stop function that is always safe to defer. When Idle is 0 or
-// negative the timer is disabled, so a caller who never sets Idle is not
-// booted the instant they hit a prompt.
+// IdleAction runs when the user idles past Idle seconds at a prompt. It
+// defaults to the usual door behavior — print a notice and exit, so the BBS
+// can reclaim the node — but callers may override it to run their own cleanup,
+// logging, or a non-terminating handler.
+var IdleAction = func() {
+	fmt.Println("\r\nYou've been idle for too long... exiting!")
+	time.Sleep(1 * time.Second)
+	os.Exit(0)
+}
+
+// startIdleTimer arms the idle timer when Idle is configured (> 0), returning a
+// stop function that is always safe to defer. When Idle is 0 or negative the
+// timer is disabled, so a caller who never sets Idle is not booted the instant
+// they hit a prompt.
 func startIdleTimer() func() {
 	if Idle <= 0 {
 		return func() {}
 	}
-	t := NewTimer(Idle, func() {
-		fmt.Println("\r\nYou've been idle for too long... exiting!")
-		time.Sleep(1 * time.Second)
-		os.Exit(0)
-	})
+	t := NewTimer(Idle, func() { IdleAction() })
 	return func() { t.Stop() }
 }
 
