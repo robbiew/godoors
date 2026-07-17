@@ -108,11 +108,11 @@ u, err := gd.Initialize("./")
 if err != nil {
 	// handle error
 } else {
-	u.Modal(art, text, l)
+	u.Modal(art, text)
 }
 ```
 
-> :point_up: Displays background ANSI art (contents, not a path) centered on screen with `text` (of display length `l`) and a "Continue? Y/n" prompt. It's a method on the `User` returned by `gd.Initialize`, so it's sized to that session's terminal.
+> :point_up: Displays background ANSI art (contents, not a path) centered on screen with `text` and a "Continue? Y/n" prompt. It's a method on the `User` returned by `gd.Initialize`, so it's sized to that session's terminal. Sizing is measured from the art and text themselves — no length argument needed.
 
 ***
 
@@ -122,12 +122,12 @@ u, err := gd.Initialize("./")
 if err != nil {
 	// handle error
 } else {
-	u.AbsCenterText(s, l, c) // method on User
-	u.AbsCenterArt(art, l)   // method on User
+	u.AbsCenterText(s, c) // method on User; appends "Continue? Y/n" and blocks
+	u.AbsCenterArt(art)   // method on User
 }
 gd.CenterText(s, w) // package function
 ```
-> :point_up: "absolute center" being both vertically and horizontally centered based on the terminal height and width. `AbsCenterText`/`AbsCenterArt` are methods on the `User` from `gd.Initialize`, so they use that session's dimensions. `s`/`art` display length is `l`; `c` is a background color constant. `AbsCenterArt` takes art contents, not a path.
+> :point_up: "absolute center" being both vertically and horizontally centered based on the terminal height and width. `AbsCenterText`/`AbsCenterArt` are methods on the `User` from `gd.Initialize`, so they use that session's dimensions, and sizing is measured from the text/art itself (no length argument). `c` is a background color constant. Note `AbsCenterText` appends a "Continue? Y/n" prompt and blocks until the user answers. `AbsCenterArt` takes art contents, not a path.
 
 ***
 

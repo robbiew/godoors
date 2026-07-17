@@ -72,16 +72,17 @@ func artDimensions(art string) (int, int) {
 
 // Modal displays background ANSI art (contents, not a path) centered on screen
 // with text and a "Continue? Y/n" prompt, sized to the user's terminal.
-func (u User) Modal(art string, text string, l int) {
+func (u User) Modal(art string, text string) {
 	artW, artH := artDimensions(art)
 	u.absCenterArt(art, artW, artH)
-	u.AbsCenterText(text, l, BgCyan)
+	u.AbsCenterText(text, BgCyan)
 }
 
-// AbsCenterText prints s (of display length l) both horizontally and vertically
-// centered on the user's terminal, with background color c, then waits on a
-// Continue prompt.
-func (u User) AbsCenterText(s string, l int, c string) {
+// AbsCenterText draws s followed by a "Continue? Y/n" prompt, horizontally and
+// vertically centered on the user's terminal with background color c, then
+// blocks on the prompt (see Continue) before returning. The centered width is
+// measured from the rendered text, so no length argument is needed.
+func (u User) AbsCenterText(s string, c string) {
 	prompt := s + " Continue? Y/n"
 	centerY := u.ModalH / 2
 	centerX := (u.ModalW - utf8.RuneCountInString(prompt)) / 2
@@ -96,10 +97,10 @@ func (u User) AbsCenterText(s string, l int, c string) {
 }
 
 // AbsCenterArt prints ANSI art (contents, not a path, SAUCE stripped) centered
-// on the user's terminal. l is the art's display width.
-func (u User) AbsCenterArt(art string, l int) {
+// on the user's terminal. Its position is derived from the art's own measured
+// width and height.
+func (u User) AbsCenterArt(art string) {
 	artW, artH := artDimensions(art)
-	_ = l
 	u.absCenterArt(art, artW, artH)
 }
 
