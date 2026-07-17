@@ -5,8 +5,8 @@ Helpful library for creating linux-based door applications (like games and utili
 If you're not already running linux-based BBS software like [Talisman](https://talismanbbs.com/), [Mystic](http://mysticbbs.com/downloads.html), [Synchronet](https://wiki.synchro.net/install:nix), [ENiGMA½](https://enigma-bbs.github.io/) or [WWIV](https://github.com/wwivbbs/wwiv), then this library probably isn't for you.
 
 ----
-![Example utilities from examples/examples.go](screenshot/screenshot1.png "Example utilities from examples/examples.go") 
-> :point_up: Screenshot of [example](https://github.com/robbiew/godoors-example) program to test some of the functions
+![Example utilities built with GoDoors](screenshot/screenshot1.png "Example utilities built with GoDoors")
+> :point_up: A door program built with some of these functions
 
 ## INSTALL
 ```go
@@ -234,7 +234,7 @@ gd.IdleAction = func() {
 > :point_up: Set the package-level `gd.Idle` (in seconds) before calling `gd.Pause`/`gd.Continue`. When the user idles at a prompt longer than this, `gd.IdleAction` runs — by default it prints a message and exits so the BBS can reclaim the node. Override `gd.IdleAction` to run your own cleanup/logging (or a non-terminating handler). Leave `gd.Idle` at `0` to disable — the timer is only armed when `gd.Idle > 0`.
 
 ## MISC
-See [godoors.go](godoors.go) for other misc. functions.
+See the [source files](https://github.com/robbiew/godoors) — or run `go doc github.com/robbiew/godoors` — for other misc. functions.
 
 ## :clipboard: TO-DO
 - ~~Time-out if no key press in X mins~~
