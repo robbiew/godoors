@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -295,14 +296,33 @@ func RestoreScreen() {
 	fmt.Print(Esc + "?47l")
 }
 
+// openDropFile opens door32.sys in dir regardless of the filename's case
+// (BBS packages variously write door32.sys, DOOR32.SYS, Door32.Sys). The
+// directory's own case is preserved. Trailing slash on dir is optional.
+func openDropFile(dir string) (*os.File, error) {
+	f, err := os.Open(filepath.Join(dir, "door32.sys"))
+	if err == nil {
+		return f, nil
+	}
+	entries, dirErr := os.ReadDir(dir)
+	if dirErr != nil {
+		return nil, err
+	}
+	for _, e := range entries {
+		if !e.IsDir() && strings.EqualFold(e.Name(), "door32.sys") {
+			return os.Open(filepath.Join(dir, e.Name()))
+		}
+	}
+	return nil, err
+}
+
 func DropFileData(path string) (string, int, int, int) {
-	// path needs to include trailing slash!
 	var dropAlias string
 	var dropTimeLeft string
 	var dropEmulation string
 	var nodeNum string
 
-	file, err := os.Open(strings.ToLower(path + "door32.sys"))
+	file, err := openDropFile(path)
 	if err != nil {
 		log.Fatal(err)
 	}
