@@ -104,8 +104,12 @@ gd.Continue() bool
 ***
 ## POP UP STYLE MODAL
 ```go
-u, _ := gd.Initialize("./")
-u.Modal(art string, text string, l int)
+u, err := gd.Initialize("./")
+if err != nil {
+	// handle error
+} else {
+	u.Modal(art, text, l)
+}
 ```
 
 > :point_up: Displays background ANSI art (contents, not a path) centered on screen with `text` (of display length `l`) and a "Continue? Y/n" prompt. It's a method on the `User` returned by `gd.Initialize`, so it's sized to that session's terminal.
@@ -114,10 +118,14 @@ u.Modal(art string, text string, l int)
 
 ## CENTER SOMETHING (text, art, etc.)
 ```go
-u, _ := gd.Initialize("./")
-u.AbsCenterText(s string, l int, c string) // method on User
-u.AbsCenterArt(art string, l int)          // method on User
-gd.CenterText(s string, w int)             // package function
+u, err := gd.Initialize("./")
+if err != nil {
+	// handle error
+} else {
+	u.AbsCenterText(s, l, c) // method on User
+	u.AbsCenterArt(art, l)   // method on User
+}
+gd.CenterText(s, w) // package function
 ```
 > :point_up: "absolute center" being both vertically and horizontally centered based on the terminal height and width. `AbsCenterText`/`AbsCenterArt` are methods on the `User` from `gd.Initialize`, so they use that session's dimensions. `s`/`art` display length is `l`; `c` is a background color constant. `AbsCenterArt` takes art contents, not a path.
 

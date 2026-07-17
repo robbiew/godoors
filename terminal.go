@@ -10,6 +10,27 @@ import (
 	"strings"
 )
 
+func parseTermSizeReply(text string) (int, int, bool) {
+	re := regexp.MustCompile(`\d+;\d+`)
+	line := re.FindString(text)
+	if line == "" {
+		return 0, 0, false
+	}
+
+	parts := strings.Split(line, ";")
+	if len(parts) != 2 {
+		return 0, 0, false
+	}
+
+	h, herr := strconv.Atoi(parts[0])
+	w, werr := strconv.Atoi(parts[1])
+	if herr != nil || werr != nil {
+		return 0, 0, false
+	}
+
+	return h, w, true
+}
+
 // GetTermSize detects the connected terminal's size by parking the cursor far
 // past any real screen and reading back the clamped cursor-position report.
 // It returns height (rows) and width (columns). If the terminal can't be
@@ -34,29 +55,13 @@ func GetTermSize() (int, int) {
 	rawModeOff.Stdin = os.Stdin
 	_ = rawModeOff.Run() // Run already waits for the command to finish
 
-	// check for the desired output
-	if strings.Contains(string(text), ";") {
-		re := regexp.MustCompile(`\d+;\d+`)
-		line := re.FindString(string(text))
-
-		s := strings.Split(line, ";")
-		sh, sw := s[0], s[1]
-
-		h, herr := strconv.Atoi(sh)
-		w, werr := strconv.Atoi(sw)
-		if herr != nil || werr != nil {
-			// Unparseable reply: fall back rather than kill the host door.
-			return defaultH, defaultW
-		}
-
-		ClearScreen()
-
-		return h, w
-
-	} else {
+	h, w, ok := parseTermSizeReply(string(text))
+	if !ok {
 		// couldn't detect, so fall back to the classic 80x25 terminal:
 		// 25 rows (height) by 80 columns (width).
 		return defaultH, defaultW
 	}
+
+	return h, w
 
 }

@@ -29,7 +29,7 @@ var (
 	ArrowDownFat = string([]rune{'\u001F'})
 	ArrowRight   = string([]rune{'\u0010'})
 	ArrowLeft    = string([]rune{'\u0011'})
-	Block        = string([]rune{'\u0219'})
+	Block        = string([]rune{'\u2588'})
 )
 
 // Common ANSI escapes sequences. These should be used when the desired action
@@ -43,7 +43,7 @@ const (
 	CursorTopLeft  = Esc + "H"
 
 	CursorBlinkEnable  = Esc + "?12h"
-	CursorBlinkDisable = Esc + "?12I"
+	CursorBlinkDisable = Esc + "?12l"
 
 	ScrollUp   = Esc + "S"
 	ScrollDown = Esc + "T"

@@ -7,19 +7,25 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 func TruncateText(s string, max int) string {
-	if len(s) > max {
-		r := 0
-		for i := range s {
-			r++
-			if r > max-3 {
-				return s[:i] + "..."
-			}
-		}
+	if max <= 0 {
+		return ""
 	}
-	return s
+
+	runeCount := utf8.RuneCountInString(s)
+	if runeCount <= max {
+		return s
+	}
+
+	runes := []rune(s)
+	if max <= 2 {
+		return string(runes[:max])
+	}
+
+	return string(runes[:max-3]) + "..."
 }
 
 func PrintAnsi(artfile string, delay int, height int) {

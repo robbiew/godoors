@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 // User holds the per-session state parsed from the drop file plus the detected
@@ -53,10 +54,27 @@ func Initialize(path string) (User, error) {
 	}, nil
 }
 
+func artDimensions(art string) (int, int) {
+	noSauce := TrimStringFromSauce(art)
+	s := bufio.NewScanner(strings.NewReader(noSauce))
+
+	width := 0
+	height := 0
+	for s.Scan() {
+		height++
+		if lineWidth := utf8.RuneCountInString(s.Text()); lineWidth > width {
+			width = lineWidth
+		}
+	}
+
+	return width, height
+}
+
 // Modal displays background ANSI art (contents, not a path) centered on screen
 // with text and a "Continue? Y/n" prompt, sized to the user's terminal.
 func (u User) Modal(art string, text string, l int) {
-	u.AbsCenterArt(art, 33)
+	artW, artH := artDimensions(art)
+	u.absCenterArt(art, artW, artH)
 	u.AbsCenterText(text, l, BgCyan)
 }
 
@@ -64,11 +82,11 @@ func (u User) Modal(art string, text string, l int) {
 // centered on the user's terminal, with background color c, then waits on a
 // Continue prompt.
 func (u User) AbsCenterText(s string, l int, c string) {
+	prompt := s + " Continue? Y/n"
 	centerY := u.ModalH / 2
-	halfLen := l / 2
-	centerX := (u.ModalW - u.ModalW/2) - halfLen
+	centerX := (u.ModalW - utf8.RuneCountInString(prompt)) / 2
 	MoveCursor(centerX, centerY)
-	fmt.Fprint(os.Stdout, WhiteHi+c+s+Reset)
+	fmt.Fprint(os.Stdout, WhiteHi+c+prompt+Reset)
 	if Continue() {
 		fmt.Fprint(os.Stdout, BgCyan+CyanHi+" Yes"+Reset)
 	} else {
@@ -80,16 +98,21 @@ func (u User) AbsCenterText(s string, l int, c string) {
 // AbsCenterArt prints ANSI art (contents, not a path, SAUCE stripped) centered
 // on the user's terminal. l is the art's display width.
 func (u User) AbsCenterArt(art string, l int) {
-	artY := (u.ModalH / 2) - 2
-	artLen := l / 2
-	artX := (u.ModalW - u.ModalW/2) - artLen
+	artW, artH := artDimensions(art)
+	_ = l
+	u.absCenterArt(art, artW, artH)
+}
+
+func (u User) absCenterArt(art string, artW int, artH int) {
+	artY := (u.ModalH - artH) / 2
+	artX := (u.ModalW - artW) / 2
 
 	noSauce := TrimStringFromSauce(art) // strip off the SAUCE metadata
 	s := bufio.NewScanner(strings.NewReader(noSauce))
 
 	for s.Scan() {
 		fmt.Fprint(os.Stdout, Esc+strconv.Itoa(artY)+";"+strconv.Itoa(artX)+"f")
-		fmt.Println(s.Text())
+		fmt.Fprintln(os.Stdout, s.Text())
 		artY++
 	}
 }
