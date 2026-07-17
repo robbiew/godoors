@@ -504,7 +504,7 @@ func PrintStringLoc(text string, x int, y int) {
 
 // Horizontally center some text.
 func CenterText(s string, w int) {
-	fmt.Fprint(os.Stdout, fmt.Sprintf("%[1]*s", -w, fmt.Sprintf("%[1]*s", (w+len(s))/2, s)))
+	fmt.Fprintf(os.Stdout, "%[1]*s", -w, fmt.Sprintf("%[1]*s", (w+len(s))/2, s))
 }
 
 // Horizontally and Vertically center some text.
