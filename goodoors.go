@@ -164,27 +164,40 @@ func Initialize(path string) (User, error) {
 	return u, nil
 }
 
-// Continue Y/N
-func Continue() bool {
-	shortTimer := NewTimer(Idle, func() {
+// startIdleTimer arms the idle-boot timer when Idle is configured (> 0),
+// returning a stop function that is always safe to defer. When Idle is 0 or
+// negative the timer is disabled, so a caller who never sets Idle is not
+// booted the instant they hit a prompt.
+func startIdleTimer() func() {
+	if Idle <= 0 {
+		return func() {}
+	}
+	t := NewTimer(Idle, func() {
 		fmt.Println("\r\nYou've been idle for too long... exiting!")
 		time.Sleep(1 * time.Second)
 		os.Exit(0)
 	})
-	defer shortTimer.Stop()
+	return func() { t.Stop() }
+}
 
-	char, key, err := keyboard.GetKey()
-	if err != nil {
-		panic(err)
+// Continue reads a single key and reports whether the user chose to proceed.
+// Y/y/Enter mean yes; N/n/Esc mean no; any other key re-prompts. If the
+// keyboard can't be read it returns false rather than crashing the door.
+func Continue() bool {
+	defer startIdleTimer()()
+
+	for {
+		char, key, err := keyboard.GetKey()
+		if err != nil {
+			return false
+		}
+		switch {
+		case string(char) == "Y" || string(char) == "y" || key == keyboard.KeyEnter:
+			return true
+		case string(char) == "N" || string(char) == "n" || key == keyboard.KeyEsc:
+			return false
+		}
 	}
-	var x bool
-	if string(char) == "Y" || string(char) == "y" || key == keyboard.KeyEnter {
-		x = true
-	}
-	if string(char) == "N" || string(char) == "n" || key == keyboard.KeyEsc {
-		x = false
-	}
-	return x
 }
 
 func Modal(artPath string, text string, l int) {
@@ -216,21 +229,13 @@ func NewTimer(seconds int, action func()) *time.Timer {
 	return timer
 }
 
-// Wait for a key press
+// Pause prints a prompt and waits for a single key press. A keyboard read
+// error is ignored so a failing terminal can't crash the door.
 func Pause() {
-
-	shortTimer := NewTimer(Idle, func() {
-		fmt.Println("\r\nYou've been idle for too long... exiting!")
-		time.Sleep(1 * time.Second)
-		os.Exit(0)
-	})
-	defer shortTimer.Stop()
+	defer startIdleTimer()()
 
 	fmt.Fprint(os.Stdout, "\r\nPrEsS a KeY")
-	_, _, err := keyboard.GetKey()
-	if err != nil {
-		panic(err)
-	}
+	_, _, _ = keyboard.GetKey()
 }
 
 // Move cursor to X, Y location
