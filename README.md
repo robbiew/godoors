@@ -23,16 +23,26 @@ import (
 
 ## DROP FILES
 
-```go 
-gd.DropFileData(path string) (string, int, int)
+```go
+gd.DropFileData(path string) (alias string, timeLeft, emulation, node int, err error)
 ```
 
-> :point_up: Pass the path of the [door32.sys](https://raw.githubusercontent.com/NuSkooler/ansi-bbs/master/docs/dropfile_formats/door32_sys.txt) drop file PARENT FOLDER (including trailing slash), and it will return HANDLE/ALIAS, TIME LEFT (in minutes), EMULATION TYPE (0 = Ascii, 1 = Ansi) and NODE NUMBER. You can check out the [main.go](examples/main.go) to see it in action using FLAG to handle the ```-path``` command line argument for the folder location.
-> Only door32.sys is supported at this time.
+> :point_up: Pass the path of the folder **containing** a [door32.sys](https://raw.githubusercontent.com/NuSkooler/ansi-bbs/master/docs/dropfile_formats/door32_sys.txt) drop file (a trailing slash is optional). It returns HANDLE/ALIAS, TIME LEFT (in minutes), EMULATION TYPE (0 = ASCII, 1 = ANSI), NODE NUMBER, and an `error`. The filename is matched case-insensitively (`door32.sys`, `DOOR32.SYS`, `Door32.Sys`). Only door32.sys is supported at this time.
 
 ```go
-go run main.go -path ./
+alias, timeLeft, emulation, node, err := gd.DropFileData("./")
+if err != nil {
+    log.Fatal(err)
+}
 ```
+
+## INITIALIZE
+
+```go
+gd.Initialize(path string) (gd.User, error)
+```
+
+> :point_up: Convenience wrapper: reads the drop file **and** probes the terminal size in one call, returning a populated `User` (Alias, TimeLeft, Emulation, NodeNum, H, W, ModalH, ModalW). Returns an `error` if the drop file can't be read or parsed.
 
 ***
  
@@ -46,10 +56,10 @@ gd.GetTermSize() (int, int)
 ***
 ## DISPLAY ANSI ART
 ```go
-gd.PrintAnsi(file string, delay int) 
+gd.PrintAnsi(art string, delay int, height int)
 ```
 
-> :point_up: Pass the valid path of an ANSI art file and it'll strip the SAUCE record, then print it line by line, with an optional delay (in milliseconds, e.g. 40) to simulate slower speeds.
+> :point_up: Pass the **contents** of an ANSI art file (e.g. `b, _ := os.ReadFile(path); gd.PrintAnsi(string(b), 40, u.H)`). It strips the SAUCE metadata trailer, then prints line by line up to `height` lines, with an optional `delay` in milliseconds (e.g. 40) to simulate slower speeds. `PrintAnsiLoc`, `AbsCenterArt` and `Modal` likewise take art contents, not a path.
 
 ```go
 
@@ -86,29 +96,38 @@ gd.Pause()
 ***
 ## CONTINUE Y/N PROMPT
 ```go
-gd.Continue()
+gd.Continue() bool
 ```
 
-> :point_up: No cancels, Yes does... something else.
+> :point_up: Reads one key: `Y`/`y`/Enter return `true`, `N`/`n`/Esc return `false`, and any other key re-prompts. Respects the idle timeout (`gd.Idle`).
 
 ***
 ## POP UP STYLE MODAL
 ```go
-gd.Modal(text string, l int, w int, h int)
-
+u, err := gd.Initialize("./")
+if err != nil {
+	// handle error
+} else {
+	u.Modal(art, text)
+}
 ```
 
-> :point_up: currently coded to display a background ANSI file with a "Continue? Y/n" prompt/
+> :point_up: Displays background ANSI art (contents, not a path) centered on screen with `text` and a "Continue? Y/n" prompt. It's a method on the `User` returned by `gd.Initialize`, so it's sized to that session's terminal. Sizing is measured from the art and text themselves — no length argument needed.
 
 ***
 
 ## CENTER SOMETHING (text, art, etc.)
 ```go
-gd.AbsCenterText(s string, l int, w int, h int, c string) 
-gd.AbsCenterArt(file string, l int, w int, h int) 
-gd.CenterText(s string, w int) 
+u, err := gd.Initialize("./")
+if err != nil {
+	// handle error
+} else {
+	u.AbsCenterText(s, c) // method on User; appends "Continue? Y/n" and blocks
+	u.AbsCenterArt(art)   // method on User
+}
+gd.CenterText(s, w) // package function
 ```
-> :point_up: "absolute center" being both vertically an horizontally centered based in the terminal height and width.
+> :point_up: "absolute center" being both vertically and horizontally centered based on the terminal height and width. `AbsCenterText`/`AbsCenterArt` are methods on the `User` from `gd.Initialize`, so they use that session's dimensions, and sizing is measured from the text/art itself (no length argument). `c` is a background color constant. Note `AbsCenterText` appends a "Continue? Y/n" prompt and blocks until the user answers. `AbsCenterArt` takes art contents, not a path.
 
 ***
 
@@ -169,7 +188,7 @@ gd.BgBlack
 gd.BgRed          
 gd.BgGreen        
 gd.BgYellow       
-gd.gd.BgBlue          
+gd.BgBlue          
 gd.BgMagenta       
 gd.BgCyan          
 gd.BgWhite         
@@ -180,7 +199,7 @@ gd.BgYellowHi
 gd.BgBlueHi     
 gd.BgMagentaHi   
 gd.BgCyanHi      
-gd.BgBWhiteHi     
+gd.BgWhiteHi     
 
 // Reset to default colors
 gd.Reset 
@@ -202,10 +221,20 @@ gd.Ibmthin
 
 ***
 
+## IDLE TIMER
+```go
+gd.Idle = 120 // seconds; 0 disables the timeout
+
+// Optional: override what happens on timeout (default prints a notice and exits)
+gd.IdleAction = func() {
+    myCleanup()
+    os.Exit(0)
+}
+```
+> :point_up: Set the package-level `gd.Idle` (in seconds) before calling `gd.Pause`/`gd.Continue`. When the user idles at a prompt longer than this, `gd.IdleAction` runs — by default it prints a message and exits so the BBS can reclaim the node. Override `gd.IdleAction` to run your own cleanup/logging (or a non-terminating handler). Leave `gd.Idle` at `0` to disable — the timer is only armed when `gd.Idle > 0`.
+
 ## MISC
 See [godoors.go](godoors.go) for other misc. functions.
-- Configurable idle/exit timer
-- Menu loop
 
 ## :clipboard: TO-DO
 - ~~Time-out if no key press in X mins~~
