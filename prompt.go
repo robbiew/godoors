@@ -46,15 +46,12 @@ func Continue() bool {
 	}
 }
 
-// NewTimer boots a user after being idle too long
+// NewTimer runs action after the given number of seconds and returns the
+// underlying timer so the caller can cancel it with Stop. It uses
+// time.AfterFunc, so stopping the timer before it fires leaves no goroutine
+// blocked waiting on the channel.
 func NewTimer(seconds int, action func()) *time.Timer {
-	timer := time.NewTimer(time.Second * time.Duration(seconds))
-
-	go func() {
-		<-timer.C
-		action()
-	}()
-	return timer
+	return time.AfterFunc(time.Duration(seconds)*time.Second, action)
 }
 
 // Pause prints a prompt and waits for a single key press. A keyboard read

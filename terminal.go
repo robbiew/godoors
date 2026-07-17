@@ -19,7 +19,7 @@ func GetTermSize() (int, int) {
 		defaultH = 25
 		defaultW = 80
 	)
-	// Set the terminal to raw mode so we aren't waiting for CLRF rom user (to be undone with `-raw`)
+	// Set the terminal to raw mode so we aren't waiting for CRLF from user (to be undone with `-raw`)
 	rawMode := exec.Command("/bin/stty", "raw")
 	rawMode.Stdin = os.Stdin
 	_ = rawMode.Run()
@@ -32,8 +32,7 @@ func GetTermSize() (int, int) {
 	// Set the terminal back from raw mode to 'cooked'
 	rawModeOff := exec.Command("/bin/stty", "-raw")
 	rawModeOff.Stdin = os.Stdin
-	_ = rawModeOff.Run()
-	rawModeOff.Wait()
+	_ = rawModeOff.Run() // Run already waits for the command to finish
 
 	// check for the desired output
 	if strings.Contains(string(text), ";") {

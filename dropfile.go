@@ -2,6 +2,7 @@ package godoors
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -19,7 +20,9 @@ func openDropFile(dir string) (*os.File, error) {
 	}
 	entries, dirErr := os.ReadDir(dir)
 	if dirErr != nil {
-		return nil, err
+		// The directory itself couldn't be read; surface that alongside the
+		// original open failure instead of masking it.
+		return nil, errors.Join(err, dirErr)
 	}
 	for _, e := range entries {
 		if !e.IsDir() && strings.EqualFold(e.Name(), "door32.sys") {
