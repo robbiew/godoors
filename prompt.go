@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 	"time"
-
-	"github.com/eiannone/keyboard"
 )
 
 // Idle is the number of seconds a user may sit at a Pause/Continue prompt
@@ -41,14 +39,14 @@ func Continue() bool {
 	defer startIdleTimer()()
 
 	for {
-		char, key, err := keyboard.GetKey()
+		char, key, err := GetKey()
 		if err != nil {
 			return false
 		}
 		switch {
-		case string(char) == "Y" || string(char) == "y" || key == keyboard.KeyEnter:
+		case string(char) == "Y" || string(char) == "y" || key == KeyEnter:
 			return true
-		case string(char) == "N" || string(char) == "n" || key == keyboard.KeyEsc:
+		case string(char) == "N" || string(char) == "n" || key == KeyEsc:
 			return false
 		}
 	}
@@ -68,5 +66,5 @@ func Pause() {
 	defer startIdleTimer()()
 
 	fmt.Fprint(os.Stdout, "\r\nPrEsS a KeY")
-	_, _, _ = keyboard.GetKey()
+	_, _, _ = GetKey()
 }
