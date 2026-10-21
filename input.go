@@ -31,10 +31,55 @@ var (
 	stdinIsTTY  bool
 )
 
+// inputReader returns the one buffered reader over stdin. Everything that
+// reads the caller's input (GetKey, GetTermSize) shares it, so bytes one
+// reader buffered are never lost to another.
+func inputReader() *bufio.Reader {
+	if stdinReader == nil {
+		stdinReader = bufio.NewReader(os.Stdin)
+	}
+	return stdinReader
+}
+
+// unreadInput puts bytes back in front of stdin, for the next GetKey.
+func unreadInput(b []byte) {
+	if len(b) == 0 {
+		return
+	}
+	stdinReader = bufio.NewReader(&replayReader{pending: b, under: inputReader()})
+}
+
+// replayReader serves replayed bytes, then the reader underneath. The read
+// that finishes the replay also takes whatever the underlying reader
+// already has buffered, so an escape sequence split across the boundary
+// (ESC replayed, "[A" buffered) arrives in one fill and decodeKey still
+// sees it as one key rather than a lone Esc.
+type replayReader struct {
+	pending []byte
+	under   *bufio.Reader
+}
+
+func (r *replayReader) Read(b []byte) (int, error) {
+	if len(r.pending) == 0 {
+		return r.under.Read(b)
+	}
+	n := copy(b, r.pending)
+	r.pending = r.pending[n:]
+	if len(r.pending) == 0 && n < len(b) {
+		if m := r.under.Buffered(); m > 0 {
+			k, _ := r.under.Read(b[n:min(len(b), n+m)]) // buffered: never blocks
+			n += k
+		}
+	}
+	return n, nil
+}
+
 // OpenInput prepares stdin for single-key reads. Safe to call once at door
 // startup; pair with CloseInput (defer) to restore the terminal locally.
+// Input already buffered (e.g. keys typed while Initialize probed the
+// terminal size) is kept.
 func OpenInput() error {
-	stdinReader = bufio.NewReader(os.Stdin)
+	inputReader()
 	if st, err := os.Stdin.Stat(); err == nil && st.Mode()&os.ModeCharDevice != 0 {
 		stdinIsTTY = true
 		raw := exec.Command("/bin/stty", "raw", "-echo")
@@ -57,10 +102,7 @@ func CloseInput() {
 // as the rune with KeyNone; Enter, Esc and arrows come back as a Key with
 // rune 0. An error means stdin is gone (dropped carrier / closed socket).
 func GetKey() (rune, Key, error) {
-	if stdinReader == nil {
-		stdinReader = bufio.NewReader(os.Stdin)
-	}
-	return decodeKey(stdinReader)
+	return decodeKey(inputReader())
 }
 
 // decodeKey reads one logical keypress from r. A lone ESC (no bytes

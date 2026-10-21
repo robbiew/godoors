@@ -45,10 +45,12 @@ func GetTermSize() (int, int) {
 	rawMode.Stdin = os.Stdin
 	_ = rawMode.Run()
 
-	reader := bufio.NewReader(os.Stdin)
 	fmt.Fprintf(os.Stdout, "\033[999;999f") // larger than any known term size
 	fmt.Fprintf(os.Stdout, "\033[6n")       // ansi escape code for reporting cursor location
-	text, _ := reader.ReadString('R')
+	// Read through the shared input reader so keys the caller types around
+	// the reply are handed back to GetKey instead of being dropped.
+	text, typed, _ := readCPR(inputReader())
+	unreadInput(typed)
 
 	// Set the terminal back from raw mode to 'cooked'
 	rawModeOff := exec.Command("/bin/stty", "-raw")
@@ -64,4 +66,27 @@ func GetTermSize() (int, int) {
 
 	return h, w
 
+}
+
+var cprReply = regexp.MustCompile(`\x1b\[\d+;\d+R$`)
+
+// readCPR reads from r until a cursor-position report (ESC [ row ; col R)
+// arrives. It returns the report and any other bytes read before it (keys
+// typed while waiting); bytes after the report stay buffered in r. A
+// stray 'R' keypress doesn't end the wait early.
+func readCPR(r *bufio.Reader) (reply string, typed []byte, err error) {
+	var buf []byte
+	for {
+		b, err := r.ReadByte()
+		if err != nil {
+			return "", buf, err
+		}
+		buf = append(buf, b)
+		if b != 'R' {
+			continue
+		}
+		if loc := cprReply.FindIndex(buf); loc != nil {
+			return string(buf[loc[0]:]), buf[:loc[0]], nil
+		}
+	}
 }
