@@ -4,15 +4,17 @@ package godoors
 // caller's socket to the door's stdin/stdout, so the player's keystrokes
 // arrive on stdin; reading the controlling terminal only works for local
 // runs and leaves remote users' keys unanswered. When stdin IS a local
-// terminal, OpenInput switches it to raw mode so single keypresses arrive
-// without Enter; when stdin is a socket or pipe it is left untouched.
+// terminal (Linux, macOS, or a Windows console), OpenInput switches it to
+// raw mode so single keypresses arrive without Enter; when stdin is a
+// socket or pipe it is left untouched.
 
 import (
 	"bufio"
 	"bytes"
 	"io"
 	"os"
-	"os/exec"
+
+	"golang.org/x/term"
 )
 
 // Key identifies non-printable keys returned by GetKey.
@@ -29,8 +31,9 @@ const (
 )
 
 var (
+	stdinPump   *pumpReader
 	stdinReader *bufio.Reader
-	stdinIsTTY  bool
+	rawState    *term.State // non-nil while OpenInput holds a local terminal in raw mode
 )
 
 // inputReader returns the one buffered reader over stdin. Everything that
@@ -38,7 +41,8 @@ var (
 // reader buffered are never lost to another.
 func inputReader() *bufio.Reader {
 	if stdinReader == nil {
-		stdinReader = bufio.NewReader(os.Stdin)
+		stdinPump = newPump(os.Stdin)
+		stdinReader = bufio.NewReader(stdinPump)
 	}
 	return stdinReader
 }
@@ -56,23 +60,39 @@ func unreadInput(b []byte) {
 // Input already buffered (e.g. keys typed while Initialize probed the
 // terminal size) is kept.
 func OpenInput() error {
+	prepareConsole()
 	inputReader()
-	if st, err := os.Stdin.Stat(); err == nil && st.Mode()&os.ModeCharDevice != 0 {
-		stdinIsTTY = true
-		raw := exec.Command("/bin/stty", "raw", "-echo")
-		raw.Stdin = os.Stdin
-		return raw.Run()
+	fd := int(os.Stdin.Fd())
+	if rawState != nil || !term.IsTerminal(fd) {
+		return nil
 	}
+	st, err := term.MakeRaw(fd)
+	if err != nil {
+		return err
+	}
+	rawState = st
 	return nil
 }
 
 // CloseInput restores the local terminal if OpenInput put it in raw mode.
 func CloseInput() {
-	if stdinIsTTY {
-		cooked := exec.Command("/bin/stty", "-raw", "echo")
-		cooked.Stdin = os.Stdin
-		_ = cooked.Run()
+	if rawState != nil {
+		_ = term.Restore(int(os.Stdin.Fd()), rawState)
+		rawState = nil
 	}
+}
+
+// withRawInput runs fn with a local terminal in raw mode (no line
+// buffering, no echo), so replies to terminal queries arrive at once and
+// don't print. Pipes, sockets and an already-raw terminal are left as is.
+func withRawInput(fn func()) {
+	fd := int(os.Stdin.Fd())
+	if rawState == nil && term.IsTerminal(fd) {
+		if st, err := term.MakeRaw(fd); err == nil {
+			defer term.Restore(fd, st)
+		}
+	}
+	fn()
 }
 
 // GetKey blocks for one keypress from stdin. Printable characters come back
