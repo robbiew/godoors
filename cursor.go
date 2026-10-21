@@ -2,15 +2,16 @@ package godoors
 
 import "fmt"
 
-// Move cursor to X, Y location
+// MoveCursor moves the cursor to column x, row y. Coordinates are 1-based
+// ((1, 1) is the top-left cell); values below 1 are clamped to 1.
 func MoveCursor(x int, y int) {
-	fmt.Printf(Esc+"%d;%df", y, x)
+	fmt.Print(cursorTo(x, y))
 }
 
-// Erase the screen
+// Erase the screen and home the cursor.
 func ClearScreen() {
 	fmt.Println(EraseScreen)
-	MoveCursor(0, 0)
+	MoveCursor(1, 1)
 }
 
 // Move the cursor n cells to up.
@@ -43,9 +44,9 @@ func CursorPreviousLine(n int) {
 	fmt.Printf(Esc+"%dF", n)
 }
 
-// Move cursor horizontally to x.
+// Move cursor horizontally to column x (1-based, clamped to 1).
 func CursorHorizontalAbsolute(x int) {
-	fmt.Printf(Esc+"%dG", x)
+	fmt.Printf(Esc+"%dG", clampCoord(x))
 }
 
 // Show the cursor.

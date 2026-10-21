@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -85,7 +84,7 @@ func (u User) Modal(art string, text string) {
 func (u User) AbsCenterText(s string, c string) {
 	prompt := s + " Continue? Y/n"
 	centerY := u.ModalH / 2
-	centerX := (u.ModalW - utf8.RuneCountInString(prompt)) / 2
+	centerX := (u.ModalW-utf8.RuneCountInString(prompt))/2 + 1 // 1-based column
 	MoveCursor(centerX, centerY)
 	fmt.Fprint(os.Stdout, WhiteHi+c+prompt+Reset)
 	if Continue() {
@@ -105,14 +104,16 @@ func (u User) AbsCenterArt(art string) {
 }
 
 func (u User) absCenterArt(art string, artW int, artH int) {
-	artY := (u.ModalH - artH) / 2
-	artX := (u.ModalW - artW) / 2
+	// 1-based: art as tall as the screen starts on row 1, not row 0 (which
+	// terminals treat as row 1, stacking the first two lines).
+	artY := (u.ModalH-artH)/2 + 1
+	artX := (u.ModalW-artW)/2 + 1
 
 	noSauce := TrimStringFromSauce(art) // strip off the SAUCE metadata
 	s := bufio.NewScanner(strings.NewReader(noSauce))
 
 	for s.Scan() {
-		fmt.Fprint(os.Stdout, Esc+strconv.Itoa(artY)+";"+strconv.Itoa(artX)+"f")
+		fmt.Fprint(os.Stdout, cursorTo(artX, artY))
 		fmt.Fprintln(os.Stdout, s.Text())
 		artY++
 	}

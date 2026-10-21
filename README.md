@@ -47,7 +47,7 @@ gd.Initialize(path string) (gd.User, error)
 gd.GetTermSize() (int, int)
 ```
 
-> :point_up: Tries to detect the user's terminal size. Returns HEIGHT and WIDTH. If it can't detect it, it'll default to 25 and 80.
+> :point_up: Tries to detect the user's terminal size. Returns HEIGHT and WIDTH. If it can't detect it, it'll default to 25 and 80. Keys the caller types while the size is being probed are kept for the next `GetKey`.
 
 ***
 ## DISPLAY ANSI ART
@@ -80,6 +80,8 @@ gd.PrintStringLoc(text string, x int, y int)
 ```
 
 > :point_up: Same as above, only it'll print the art to the screen at X,Y coordinates, incrementing the Y position after every line. Handy of you need to update the screen with art in a particular location without clearing and re-writing everything.
+
+> :warning: **Coordinates are 1-based**, as in ANSI: `(1, 1)` is the top-left cell, `x` is the column and `y` is the row. This applies to `PrintAnsiLoc`, `PrintStringLoc`, `MoveCursor` and `CursorHorizontalAbsolute`. Values below 1 are clamped to 1. If your code counts from 0, add 1 when calling in; otherwise row 0 and row 1 land on the same line.
 
 ***
 ## PAUSE

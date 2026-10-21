@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -40,29 +39,32 @@ func PrintAnsi(artfile string, delay int, height int) {
 		if i < height {
 			fmt.Fprint(os.Stdout, "\r\n")
 		} else {
-			MoveCursor(0, 0)
+			MoveCursor(1, 1)
 			break
 		}
 		i++
 	}
 }
 
+// PrintAnsiLoc prints art (contents, SAUCE stripped) with its top-left at
+// column x, row y, moving down one row per line. Coordinates are 1-based
+// ((1, 1) is the top-left cell); values below 1 are clamped to 1.
 func PrintAnsiLoc(artfile string, x int, y int) {
-	yLoc := y
+	yLoc := clampCoord(y)
 
 	noSauce := TrimStringFromSauce(artfile) // strip off the SAUCE metadata
 	s := bufio.NewScanner(strings.NewReader(string(noSauce)))
 
 	for s.Scan() {
-		fmt.Fprint(os.Stdout, Esc+strconv.Itoa(yLoc)+";"+strconv.Itoa(x)+"f"+s.Text())
+		fmt.Fprint(os.Stdout, cursorTo(x, yLoc)+s.Text())
 		yLoc++
 	}
 }
 
-// Print text at an X, Y location
+// PrintStringLoc prints text at column x, row y. Coordinates are 1-based
+// ((1, 1) is the top-left cell); values below 1 are clamped to 1.
 func PrintStringLoc(text string, x int, y int) {
-	fmt.Fprint(os.Stdout, Esc+strconv.Itoa(y)+";"+strconv.Itoa(x)+"f"+text)
-
+	fmt.Fprint(os.Stdout, cursorTo(x, y)+text)
 }
 
 // Horizontally center some text.
