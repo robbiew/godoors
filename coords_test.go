@@ -100,9 +100,9 @@ func TestReplayedEscJoinsBufferedSequence(t *testing.T) {
 	orig := stdinReader
 	defer func() { stdinReader = orig }()
 	stdinReader = bufio.NewReader(strings.NewReader("\x1b\x1b[24;80R[A"))
-	reply, typed, err := readCPR(stdinReader)
-	if err != nil || reply != "\x1b[24;80R" || string(typed) != "\x1b" {
-		t.Fatalf("got reply=%q typed=%q err=%v", reply, typed, err)
+	replies, typed, err := readReplies(stdinReader, 1)
+	if err != nil || len(replies) != 1 || replies[0] != "\x1b[24;80R" || string(typed) != "\x1b" {
+		t.Fatalf("got replies=%q typed=%q err=%v", replies, typed, err)
 	}
 	unreadInput(typed)
 	if ch, k, err := GetKey(); err != nil || k != KeyUp {
