@@ -9,8 +9,6 @@ package godoors
 
 import (
 	"bufio"
-	"bytes"
-	"io"
 	"os"
 	"os/exec"
 )
@@ -48,7 +46,32 @@ func unreadInput(b []byte) {
 	if len(b) == 0 {
 		return
 	}
-	stdinReader = bufio.NewReader(io.MultiReader(bytes.NewReader(b), inputReader()))
+	stdinReader = bufio.NewReader(&replayReader{pending: b, under: inputReader()})
+}
+
+// replayReader serves replayed bytes, then the reader underneath. The read
+// that finishes the replay also takes whatever the underlying reader
+// already has buffered, so an escape sequence split across the boundary
+// (ESC replayed, "[A" buffered) arrives in one fill and decodeKey still
+// sees it as one key rather than a lone Esc.
+type replayReader struct {
+	pending []byte
+	under   *bufio.Reader
+}
+
+func (r *replayReader) Read(b []byte) (int, error) {
+	if len(r.pending) == 0 {
+		return r.under.Read(b)
+	}
+	n := copy(b, r.pending)
+	r.pending = r.pending[n:]
+	if len(r.pending) == 0 && n < len(b) {
+		if m := r.under.Buffered(); m > 0 {
+			k, _ := r.under.Read(b[n:min(len(b), n+m)]) // buffered: never blocks
+			n += k
+		}
+	}
+	return n, nil
 }
 
 // OpenInput prepares stdin for single-key reads. Safe to call once at door

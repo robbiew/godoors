@@ -90,3 +90,33 @@ func TestUnreadInputReplaysBeforeStdin(t *testing.T) {
 		t.Fatalf("got %q, want typed keys first: abcd", string(got))
 	}
 }
+
+// Copilot review: an ESC typed before the size reply and "[A" after it
+// must still decode as one arrow key once the ESC is replayed.
+func TestReplayedEscJoinsBufferedSequence(t *testing.T) {
+	orig := stdinReader
+	defer func() { stdinReader = orig }()
+	stdinReader = bufio.NewReader(strings.NewReader("\x1b\x1b[24;80R[A"))
+	reply, typed, err := readCPR(stdinReader)
+	if err != nil || reply != "\x1b[24;80R" || string(typed) != "\x1b" {
+		t.Fatalf("got reply=%q typed=%q err=%v", reply, typed, err)
+	}
+	unreadInput(typed)
+	if ch, k, err := GetKey(); err != nil || k != KeyUp {
+		t.Fatalf("GetKey = %q %v %v, want KeyUp", ch, k, err)
+	}
+}
+
+// Copilot review: full-height centered art must not end with a newline,
+// which would scroll the screen and drop its first line.
+func TestFullHeightCenteredArtDoesNotScroll(t *testing.T) {
+	u := User{ModalH: 3, ModalW: 10}
+	out := captureStdout(t, func() { u.AbsCenterArt("aaa\nbbb\nccc") })
+	if strings.ContainsAny(out, "\r\n") {
+		t.Fatalf("centered art emitted a line break: %q", out)
+	}
+	want := "\x1b[1;4faaa\x1b[2;4fbbb\x1b[3;4fccc"
+	if out != want {
+		t.Fatalf("got %q, want %q", out, want)
+	}
+}

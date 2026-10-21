@@ -112,9 +112,10 @@ func (u User) absCenterArt(art string, artW int, artH int) {
 	noSauce := TrimStringFromSauce(art) // strip off the SAUCE metadata
 	s := bufio.NewScanner(strings.NewReader(noSauce))
 
+	// Every line is positioned explicitly, so no trailing newline: one after
+	// the bottom row of full-height art would scroll its first line away.
 	for s.Scan() {
-		fmt.Fprint(os.Stdout, cursorTo(artX, artY))
-		fmt.Fprintln(os.Stdout, s.Text())
+		fmt.Fprint(os.Stdout, cursorTo(artX, artY)+s.Text())
 		artY++
 	}
 }
