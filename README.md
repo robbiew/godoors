@@ -59,7 +59,7 @@ gd.MusicSequence(tune string) string
 
 > :point_up: SyncTERM (and other CTerm-compatible terminals) play ANSI music. `IsCTerm` asks the terminal what it is (the `ESC[c` device-attributes query; CTerm answers with its own signature) and caches the answer; `Initialize` fills in `User.CTerm` the same way. Don't rely on the `TERM` environment variable for this — on a BBS it describes the server, not the caller.
 
-> `PlayMusic` sends a tune in classic BASIC `PLAY`/MML notation as `CSI | <tune> SO`, the form SyncTERM always accepts. `MusicSequence` returns that string instead of printing it. Control characters are dropped from the tune so they can't end the sequence early.
+> `PlayMusic` sends a tune in the CTerm music grammar (a dialect of BASIC `PLAY`) as `CSI | <tune> SO SI`. CTerm always accepts the `CSI |` introducer, and the `SI` after the terminator keeps terminals that don't play music from staying shifted into their alternate character set. `MusicSequence` returns that string instead of printing it. CTerm ignores a whole tune containing any character outside `aAbBcCdDeEfFgGlLmMnNoOpPsStT0123456789.-+#<>` and space, so other characters are dropped.
 
 ```go
 if u.CTerm {
@@ -69,12 +69,12 @@ if u.CTerm {
 
 | Command | Meaning |
 |---|---|
-| `A`–`G` | Note. `+`/`#` sharp, `-` flat, then an optional length (`4` = quarter) and `.` for dotted |
-| `O n`, `<`, `>` | Set octave (0–6), or step down/up one |
-| `L n` | Default note length |
-| `T n` | Tempo (quarter notes per minute) |
-| `P n` | Pause of length n |
-| `N n` | Play note number n (1–84; 0 = rest) |
+| `A`–`G` | Note. `+`/`#` sharpen and `-` flattens, one semitone each; then an optional length (`4` = quarter) and `.` for dotted |
+| `P` | Pause, with the same length rules as a note |
+| `O n`, `<`, `>` | Set octave (0–6, default 4), or step down/up one |
+| `L n` | Default length for notes without one (1–64, default 4) |
+| `T n` | Tempo in quarter notes per minute (32–255, default 120) |
+| `N n` | Play note number n (0–71; `N0` is C in octave 0; out-of-range values are silent) |
 | `MF` / `MB` | Play in the foreground (wait) / background (keep going) |
 | `MN` / `ML` / `MS` | Normal / legato / staccato |
 

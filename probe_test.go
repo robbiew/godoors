@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"io"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -15,9 +16,9 @@ func fakeStdin(t *testing.T) *io.PipeWriter {
 	pr, pw := io.Pipe()
 	stdinPump = newPump(pr)
 	stdinReader = bufio.NewReader(stdinPump)
-	ctermMu.Lock()
+	probeMu.Lock()
 	ctermKnown, ctermDetected = false, false
-	ctermMu.Unlock()
+	probeMu.Unlock()
 	t.Cleanup(func() {
 		pw.Close()
 		stdinPump, stdinReader = origPump, origReader
@@ -97,9 +98,101 @@ func TestPlainVT100IsNotCTerm(t *testing.T) {
 	}
 }
 
+// Review: CTerm ignores a tune with any character outside its list, and
+// the SO terminator must be followed by SI.
 func TestMusicSequence(t *testing.T) {
-	got := MusicSequence("T120 L8 O4 CDE\x0e\x0fG")
-	if got != "\x1b[|T120 L8 O4 CDEG\x0e" {
+	got := MusicSequence("T120 L8 O4 CDE\x0e\x0fG! xyz")
+	if got != "\x1b[|T120 L8 O4 CDEG \x0e\x0f" {
 		t.Fatalf("got %q", got)
+	}
+}
+
+// Review: the pump must not read stdin ahead of demand, or keys typed
+// after the door stops reading would be taken from whoever reads next.
+func TestPumpDoesNotReadAhead(t *testing.T) {
+	pr, pw := io.Pipe()
+	defer pw.Close()
+	p := newPump(pr)
+	go pw.Write([]byte("a"))
+	buf := make([]byte, 8)
+	if n, err := p.Read(buf); err != nil || string(buf[:n]) != "a" {
+		t.Fatalf("first read: %q %v", buf[:n], err)
+	}
+	wrote := make(chan struct{})
+	go func() { pw.Write([]byte("b")); close(wrote) }()
+	select {
+	case <-wrote:
+		t.Fatal("the pump consumed input nobody asked for")
+	case <-time.After(50 * time.Millisecond):
+	}
+	if n, err := p.Read(buf); err != nil || string(buf[:n]) != "b" {
+		t.Fatalf("second read: %q %v", buf[:n], err)
+	}
+}
+
+// Review: an arrow key split across two stdin reads (the first ending at
+// ESC) must still decode as one key, not Esc + "[" + "A".
+func TestEscSequenceSplitAcrossReads(t *testing.T) {
+	pw := fakeStdin(t)
+	go func() {
+		pw.Write([]byte(strings.Repeat("x", 511) + "\x1b"))
+		time.Sleep(5 * time.Millisecond)
+		pw.Write([]byte("[A"))
+	}()
+	for i := 0; i < 511; i++ {
+		if ch, _, err := GetKey(); err != nil || ch != 'x' {
+			t.Fatalf("key %d = %q %v", i, ch, err)
+		}
+	}
+	if ch, k, err := GetKey(); err != nil || k != KeyUp {
+		t.Fatalf("GetKey = %q %v %v, want KeyUp", ch, k, err)
+	}
+}
+
+func TestLoneEscStillArrives(t *testing.T) {
+	pw := fakeStdin(t)
+	go pw.Write([]byte("\x1b"))
+	if _, k, err := GetKey(); err != nil || k != KeyEsc {
+		t.Fatalf("GetKey = %v %v, want KeyEsc", k, err)
+	}
+	go pw.Write([]byte("k"))
+	if ch, _, err := GetKey(); err != nil || ch != 'k' {
+		t.Fatalf("GetKey = %q %v, want k", ch, err)
+	}
+}
+
+// Review: a device-attributes reply that arrives after its probe timed
+// out must be swallowed whole, not leak "67;84;...c" as keystrokes.
+func TestLateReplyAfterTimeoutIsSkipped(t *testing.T) {
+	old := probeTimeout
+	probeTimeout = 30 * time.Millisecond
+	defer func() { probeTimeout = old }()
+	pw := fakeStdin(t)
+	captureStdout(t, func() { probeTerminal(false) })
+	go pw.Write([]byte("\x1b[=67;84;101;114;109;1;316ck"))
+	if ch, k, err := GetKey(); err != nil || ch != 'k' || k != KeyNone {
+		t.Fatalf("GetKey = %q %v %v, want the k typed after the late reply", ch, k, err)
+	}
+}
+
+// Review: concurrent IsCTerm calls must share one probe, not race on the
+// shared input with duplicate queries.
+func TestIsCTermProbesOnceConcurrently(t *testing.T) {
+	pw := fakeStdin(t)
+	go pw.Write([]byte("\x1b[=67;84;101;114;109;1;316c"))
+	results := make(chan bool, 2)
+	out := captureStdout(t, func() {
+		var wg sync.WaitGroup
+		for i := 0; i < 2; i++ {
+			wg.Add(1)
+			go func() { defer wg.Done(); results <- IsCTerm() }()
+		}
+		wg.Wait()
+	})
+	if n := strings.Count(out, "\x1b[c"); n != 1 {
+		t.Fatalf("sent %d device-attributes queries, want 1", n)
+	}
+	if !<-results || !<-results {
+		t.Fatal("both callers must see the CTerm answer")
 	}
 }

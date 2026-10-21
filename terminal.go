@@ -64,19 +64,18 @@ func GetTermSize() (int, int) {
 // (see PlayMusic). The terminal is asked once; the answer is cached, and
 // Initialize fills in User.CTerm with it.
 func IsCTerm() bool {
-	ctermMu.Lock()
-	known := ctermKnown
-	ctermMu.Unlock()
-	if !known {
-		probeTerminal(false)
+	probeMu.Lock()
+	defer probeMu.Unlock()
+	if !ctermKnown {
+		probeTerminalLocked(false)
 	}
-	ctermMu.Lock()
-	defer ctermMu.Unlock()
 	return ctermDetected
 }
 
 var (
-	ctermMu       sync.Mutex
+	// probeMu serializes probes (only one query may be in flight on the
+	// shared input) and guards the cached CTerm answer.
+	probeMu       sync.Mutex
 	ctermKnown    bool
 	ctermDetected bool
 )
@@ -90,6 +89,14 @@ var probeTimeout = 1500 * time.Millisecond
 // the shared input reader with a deadline. It records whether the terminal
 // is CTerm and returns the probed size.
 func probeTerminal(askSize bool) (h, w int, sizeOK bool) {
+	probeMu.Lock()
+	defer probeMu.Unlock()
+	return probeTerminalLocked(askSize)
+}
+
+// probeTerminalLocked is probeTerminal for callers holding probeMu.
+func probeTerminalLocked(askSize bool) (h, w int, sizeOK bool) {
+	prepareConsole() // queries are escape sequences: a Windows console must process them
 	query, want := "\x1b[c", 1
 	if askSize {
 		query, want = "\x1b[999;999f\x1b[6n\x1b[c", 2
@@ -115,9 +122,7 @@ func probeTerminal(askSize bool) (h, w int, sizeOK bool) {
 			cterm = isCTermDA(rep)
 		}
 	}
-	ctermMu.Lock()
 	ctermKnown, ctermDetected = true, cterm
-	ctermMu.Unlock()
 	return h, w, sizeOK
 }
 
