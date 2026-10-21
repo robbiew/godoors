@@ -1,6 +1,6 @@
 # :computer: GoDoors
 
-Helpful library for creating linux-based door applications (like games and utilities) for BBSs that utilize STDIN and STDOUT, when connected over a terminal program like [SyncTerm](https://syncterm.bbsdev.net/), [MagiTerm](https://gitlab.com/magickabbs/MagiTerm), [NetRunner](http://mysticbbs.com/downloads.html) or [IGTerm](https://www.phenomprod.com/).
+Helpful library for creating door applications (like games and utilities) for BBSs that utilize STDIN and STDOUT — on Linux and macOS, and runnable locally in a Windows console for development — when connected over a terminal program like [SyncTerm](https://syncterm.bbsdev.net/), [MagiTerm](https://gitlab.com/magickabbs/MagiTerm), [NetRunner](http://mysticbbs.com/downloads.html) or [IGTerm](https://www.phenomprod.com/).
 
 ----
 
@@ -38,7 +38,7 @@ if err != nil {
 gd.Initialize(path string) (gd.User, error)
 ```
 
-> :point_up: Convenience wrapper: reads the drop file **and** probes the terminal size in one call, returning a populated `User` (Alias, TimeLeft, Emulation, NodeNum, H, W, ModalH, ModalW). Returns an `error` if the drop file can't be read or parsed.
+> :point_up: Convenience wrapper: reads the drop file **and** probes the terminal in one call, returning a populated `User` (Alias, TimeLeft, Emulation, NodeNum, H, W, ModalH, ModalW, CTerm). `CTerm` is true when the caller's terminal identifies as SyncTERM/CTerm (see [ANSI MUSIC](#ansi-music)). Returns an `error` if the drop file can't be read or parsed.
 
 ***
  
@@ -47,7 +47,36 @@ gd.Initialize(path string) (gd.User, error)
 gd.GetTermSize() (int, int)
 ```
 
-> :point_up: Tries to detect the user's terminal size. Returns HEIGHT and WIDTH. If it can't detect it, it'll default to 25 and 80. Keys the caller types while the size is being probed are kept for the next `GetKey`.
+> :point_up: Tries to detect the user's terminal size. Returns HEIGHT and WIDTH. A local terminal is asked directly; a remote caller's terminal is probed with a cursor-position report. If the terminal doesn't answer within 1.5 seconds, or can't be detected, it defaults to 25 and 80. Keys the caller types while the size is being probed are kept for the next `GetKey`.
+
+***
+## ANSI MUSIC
+```go
+gd.IsCTerm() bool
+gd.PlayMusic(tune string)
+gd.MusicSequence(tune string) string
+```
+
+> :point_up: SyncTERM (and other CTerm-compatible terminals) play ANSI music. `IsCTerm` asks the terminal what it is (the `ESC[c` device-attributes query; CTerm answers with its own signature) and caches the answer; `Initialize` fills in `User.CTerm` the same way. Don't rely on the `TERM` environment variable for this — on a BBS it describes the server, not the caller.
+
+> `PlayMusic` sends a tune in the CTerm music grammar (a dialect of BASIC `PLAY`) as `CSI | <tune> SO SI`. CTerm always accepts the `CSI |` introducer, and the `SI` after the terminator keeps terminals that don't play music from staying shifted into their alternate character set. `MusicSequence` returns that string instead of printing it. CTerm ignores a whole tune containing any character outside `aAbBcCdDeEfFgGlLmMnNoOpPsStT0123456789.-+#<>` and space, so other characters are dropped.
+
+```go
+if u.CTerm {
+	gd.PlayMusic("MB T140 L8 O3 G4 >G4 E-4 D4 <B-4 G2")
+}
+```
+
+| Command | Meaning |
+|---|---|
+| `A`–`G` | Note. `+`/`#` sharpen and `-` flattens, one semitone each; then an optional length (`4` = quarter) and `.` for dotted |
+| `P` | Pause, with the same length rules as a note |
+| `O n`, `<`, `>` | Set octave (0–6, default 4), or step down/up one |
+| `L n` | Default length for notes without one (1–64, default 4) |
+| `T n` | Tempo in quarter notes per minute (32–255, default 120) |
+| `N n` | Play note number n (0–71; `N0` is C in octave 0; out-of-range values are silent) |
+| `MF` / `MB` | Play in the foreground (wait) / background (keep going) |
+| `MN` / `ML` / `MS` | Normal / legato / staccato |
 
 ***
 ## DISPLAY ANSI ART

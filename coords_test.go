@@ -43,33 +43,36 @@ func TestPrintStringLocClamps(t *testing.T) {
 	}
 }
 
-func TestReadCPRKeepsTypedKeys(t *testing.T) {
-	r := bufio.NewReader(strings.NewReader("ab\x1b[24;80Rcd"))
-	reply, typed, err := readCPR(r)
-	if err != nil || reply != "\x1b[24;80R" || string(typed) != "ab" {
-		t.Fatalf("got reply=%q typed=%q err=%v", reply, typed, err)
+func TestReadRepliesKeepsTypedKeys(t *testing.T) {
+	r := bufio.NewReader(strings.NewReader("ab\x1b[24;80Rx\x1b[?1;2ccd"))
+	replies, typed, err := readReplies(r, 2)
+	if err != nil || len(replies) != 2 || replies[0] != "\x1b[24;80R" || replies[1] != "\x1b[?1;2c" {
+		t.Fatalf("got replies=%q err=%v", replies, err)
+	}
+	if string(typed) != "abx" {
+		t.Fatalf("typed = %q, want the keys around the replies: abx", typed)
 	}
 	rest, _ := r.ReadString(0)
 	if rest != "cd" {
-		t.Fatalf("bytes after the reply must stay buffered, got %q", rest)
+		t.Fatalf("bytes after the replies must stay buffered, got %q", rest)
 	}
-	if h, w, ok := parseTermSizeReply(reply); !ok || h != 24 || w != 80 {
+	if h, w, ok := parseTermSizeReply(replies[0]); !ok || h != 24 || w != 80 {
 		t.Fatalf("reply did not parse: %d,%d,%v", h, w, ok)
 	}
 }
 
-func TestReadCPRIgnoresStrayR(t *testing.T) {
-	r := bufio.NewReader(strings.NewReader("R\x1b[25;132R"))
-	reply, typed, err := readCPR(r)
-	if err != nil || reply != "\x1b[25;132R" || string(typed) != "R" {
-		t.Fatalf("got reply=%q typed=%q err=%v", reply, typed, err)
+func TestReadRepliesIgnoresStrayKeys(t *testing.T) {
+	r := bufio.NewReader(strings.NewReader("Rc\x1b[25;132R"))
+	replies, typed, err := readReplies(r, 1)
+	if err != nil || len(replies) != 1 || replies[0] != "\x1b[25;132R" || string(typed) != "Rc" {
+		t.Fatalf("got replies=%q typed=%q err=%v", replies, typed, err)
 	}
 }
 
-func TestReadCPRNoReply(t *testing.T) {
+func TestReadRepliesNoReply(t *testing.T) {
 	r := bufio.NewReader(strings.NewReader("xyz"))
-	if _, typed, err := readCPR(r); err == nil || string(typed) != "xyz" {
-		t.Fatalf("want an error and the typed bytes back, got typed=%q err=%v", typed, err)
+	if replies, typed, err := readReplies(r, 1); err == nil || len(replies) != 0 || string(typed) != "xyz" {
+		t.Fatalf("want an error and the typed bytes back, got replies=%q typed=%q err=%v", replies, typed, err)
 	}
 }
 
@@ -97,9 +100,9 @@ func TestReplayedEscJoinsBufferedSequence(t *testing.T) {
 	orig := stdinReader
 	defer func() { stdinReader = orig }()
 	stdinReader = bufio.NewReader(strings.NewReader("\x1b\x1b[24;80R[A"))
-	reply, typed, err := readCPR(stdinReader)
-	if err != nil || reply != "\x1b[24;80R" || string(typed) != "\x1b" {
-		t.Fatalf("got reply=%q typed=%q err=%v", reply, typed, err)
+	replies, typed, err := readReplies(stdinReader, 1)
+	if err != nil || len(replies) != 1 || replies[0] != "\x1b[24;80R" || string(typed) != "\x1b" {
+		t.Fatalf("got replies=%q typed=%q err=%v", replies, typed, err)
 	}
 	unreadInput(typed)
 	if ch, k, err := GetKey(); err != nil || k != KeyUp {

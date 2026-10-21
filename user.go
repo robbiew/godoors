@@ -11,7 +11,8 @@ import (
 
 // User holds the per-session state parsed from the drop file plus the detected
 // terminal geometry. ModalH/ModalW are the height and width rounded down to an
-// even number, used to center modal content.
+// even number, used to center modal content. CTerm is true when the caller's
+// terminal identified as SyncTERM/CTerm, which plays ANSI music.
 type User struct {
 	Alias     string
 	TimeLeft  int
@@ -21,6 +22,7 @@ type User struct {
 	W         int
 	ModalH    int
 	ModalW    int
+	CTerm     bool
 }
 
 // evenDown rounds n down to the nearest even number so modal content can be
@@ -32,8 +34,9 @@ func evenDown(n int) int {
 	return n - 1
 }
 
-// Initialize reads the drop file at path and probes the terminal, returning a
-// populated User. It returns an error if the drop file can't be read or parsed.
+// Initialize reads the drop file at path and probes the terminal (size and
+// whether it is CTerm), returning a populated User. It returns an error if
+// the drop file can't be read or parsed.
 func Initialize(path string) (User, error) {
 	alias, timeLeft, emulation, nodeNum, err := DropFileData(path)
 	if err != nil {
@@ -50,6 +53,7 @@ func Initialize(path string) (User, error) {
 		W:         w,
 		ModalH:    evenDown(h),
 		ModalW:    evenDown(w),
+		CTerm:     IsCTerm(),
 	}, nil
 }
 

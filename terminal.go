@@ -4,10 +4,13 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
+
+	"golang.org/x/term"
 )
 
 func parseTermSizeReply(text string) (int, int, bool) {
@@ -31,62 +34,131 @@ func parseTermSizeReply(text string) (int, int, bool) {
 	return h, w, true
 }
 
-// GetTermSize detects the connected terminal's size by parking the cursor far
-// past any real screen and reading back the clamped cursor-position report.
-// It returns height (rows) and width (columns). If the terminal can't be
-// probed or the reply can't be parsed, it falls back to the classic 25x80.
+// GetTermSize detects the connected terminal's size and returns height
+// (rows) and width (columns). A local terminal is asked directly; a remote
+// caller's terminal is probed by parking the cursor far past any real
+// screen and reading back the clamped cursor-position report. If the
+// terminal doesn't answer within a moment, or the reply can't be parsed,
+// it falls back to the classic 25x80. Keys typed during the probe are kept
+// for GetKey.
 func GetTermSize() (int, int) {
 	const (
 		defaultH = 25
 		defaultW = 80
 	)
-	// Set the terminal to raw mode so we aren't waiting for CRLF from user (to be undone with `-raw`)
-	rawMode := exec.Command("/bin/stty", "raw")
-	rawMode.Stdin = os.Stdin
-	_ = rawMode.Run()
-
-	fmt.Fprintf(os.Stdout, "\033[999;999f") // larger than any known term size
-	fmt.Fprintf(os.Stdout, "\033[6n")       // ansi escape code for reporting cursor location
-	// Read through the shared input reader so keys the caller types around
-	// the reply are handed back to GetKey instead of being dropped.
-	text, typed, _ := readCPR(inputReader())
-	unreadInput(typed)
-
-	// Set the terminal back from raw mode to 'cooked'
-	rawModeOff := exec.Command("/bin/stty", "-raw")
-	rawModeOff.Stdin = os.Stdin
-	_ = rawModeOff.Run() // Run already waits for the command to finish
-
-	h, w, ok := parseTermSizeReply(string(text))
+	prepareConsole()
+	if w, h, err := term.GetSize(int(os.Stdout.Fd())); err == nil && w > 0 && h > 0 {
+		return h, w
+	}
+	h, w, ok := probeTerminal(true)
 	if !ok {
 		// couldn't detect, so fall back to the classic 80x25 terminal:
 		// 25 rows (height) by 80 columns (width).
 		return defaultH, defaultW
 	}
-
 	return h, w
-
 }
 
-var cprReply = regexp.MustCompile(`\x1b\[\d+;\d+R$`)
+// IsCTerm reports whether the caller's terminal identifies as CTerm,
+// i.e. SyncTERM or another CTerm-compatible client, which play ANSI music
+// (see PlayMusic). The terminal is asked once; the answer is cached, and
+// Initialize fills in User.CTerm with it.
+func IsCTerm() bool {
+	probeMu.Lock()
+	defer probeMu.Unlock()
+	if !ctermKnown {
+		probeTerminalLocked(false)
+	}
+	return ctermDetected
+}
 
-// readCPR reads from r until a cursor-position report (ESC [ row ; col R)
-// arrives. It returns the report and any other bytes read before it (keys
-// typed while waiting); bytes after the report stay buffered in r. A
-// stray 'R' keypress doesn't end the wait early.
-func readCPR(r *bufio.Reader) (reply string, typed []byte, err error) {
-	var buf []byte
-	for {
-		b, err := r.ReadByte()
-		if err != nil {
-			return "", buf, err
+var (
+	// probeMu serializes probes (only one query may be in flight on the
+	// shared input) and guards the cached CTerm answer.
+	probeMu       sync.Mutex
+	ctermKnown    bool
+	ctermDetected bool
+)
+
+// probeTimeout bounds how long a probe waits for the terminal to answer;
+// terminals that ignore a query would otherwise hang the door.
+var probeTimeout = 1500 * time.Millisecond
+
+// probeTerminal sends the device-attributes query (ESC[c), plus a
+// cursor-position probe when askSize is set, and reads the replies through
+// the shared input reader with a deadline. It records whether the terminal
+// is CTerm and returns the probed size.
+func probeTerminal(askSize bool) (h, w int, sizeOK bool) {
+	probeMu.Lock()
+	defer probeMu.Unlock()
+	return probeTerminalLocked(askSize)
+}
+
+// probeTerminalLocked is probeTerminal for callers holding probeMu.
+func probeTerminalLocked(askSize bool) (h, w int, sizeOK bool) {
+	prepareConsole() // queries are escape sequences: a Windows console must process them
+	query, want := "\x1b[c", 1
+	if askSize {
+		query, want = "\x1b[999;999f\x1b[6n\x1b[c", 2
+	}
+	var replies []string
+	withRawInput(func() {
+		fmt.Fprint(os.Stdout, query)
+		r := inputReader()
+		if stdinPump != nil {
+			stdinPump.setDeadline(time.Now().Add(probeTimeout))
+			defer stdinPump.setDeadline(time.Time{})
 		}
-		buf = append(buf, b)
-		if b != 'R' {
-			continue
-		}
-		if loc := cprReply.FindIndex(buf); loc != nil {
-			return string(buf[loc[0]:]), buf[:loc[0]], nil
+		var typed []byte
+		replies, typed, _ = readReplies(r, want)
+		unreadInput(typed)
+	})
+	cterm := false
+	for _, rep := range replies {
+		switch {
+		case strings.HasSuffix(rep, "R"):
+			h, w, sizeOK = parseTermSizeReply(rep)
+		case strings.HasSuffix(rep, "c"):
+			cterm = isCTermDA(rep)
 		}
 	}
+	ctermKnown, ctermDetected = true, cterm
+	return h, w, sizeOK
+}
+
+// termReply matches the end of a reply to one of our queries: a
+// cursor-position report (ESC [ row ; col R) or device attributes
+// (ESC [ ? ... c, or ESC [ = ... c from CTerm).
+var termReply = regexp.MustCompile(`\x1b\[[?=]?[0-9;]*[Rc]$`)
+
+// readReplies reads from r until n terminal replies have arrived or a read
+// fails (such as the probe deadline). Every other byte is a key the caller
+// typed while waiting and is returned in typed, in order; bytes after the
+// last reply stay buffered in r. A stray 'R' or 'c' keypress doesn't end a
+// reply early.
+func readReplies(r *bufio.Reader, n int) (replies []string, typed []byte, err error) {
+	var buf []byte
+	for len(replies) < n {
+		b, err := r.ReadByte()
+		if err != nil {
+			return replies, append(typed, buf...), err
+		}
+		buf = append(buf, b)
+		if b != 'R' && b != 'c' {
+			continue
+		}
+		if loc := termReply.FindIndex(buf); loc != nil {
+			replies = append(replies, string(buf[loc[0]:]))
+			typed = append(typed, buf[:loc[0]]...)
+			buf = nil
+		}
+	}
+	return replies, typed, nil
+}
+
+// isCTermDA reports whether a device-attributes reply came from CTerm,
+// which answers ESC[c with ESC[=67;84;101;114;109;<version>c ("CTerm" in
+// decimal ASCII).
+func isCTermDA(reply string) bool {
+	return strings.HasPrefix(reply, "\x1b[=67;84;101;114;109")
 }
