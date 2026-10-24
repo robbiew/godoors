@@ -3,7 +3,6 @@ package godoors
 import (
 	"bufio"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -36,12 +35,18 @@ func evenDown(n int) int {
 
 // Initialize reads the drop file at path and probes the terminal (size and
 // whether it is CTerm), returning a populated User. It returns an error if
-// the drop file can't be read or parsed.
+// the drop file can't be read or parsed, or the Windows socket cannot be opened.
+// Pair a successful call with CloseSession at door exit.
 func Initialize(path string) (User, error) {
-	alias, timeLeft, emulation, nodeNum, err := DropFileData(path)
+	info, err := sessionDropFile(path)
 	if err != nil {
 		return User{}, err
 	}
+	if err := connectSession(info); err != nil {
+		return User{}, err
+	}
+	alias, timeLeft, emulation, nodeNum := info.Alias, info.TimeLeft, info.Emulation, info.Node
+
 	h, w := GetTermSize()
 
 	return User{
@@ -90,11 +95,11 @@ func (u User) AbsCenterText(s string, c string) {
 	centerY := u.ModalH / 2
 	centerX := (u.ModalW-utf8.RuneCountInString(prompt))/2 + 1 // 1-based column
 	MoveCursor(centerX, centerY)
-	fmt.Fprint(os.Stdout, WhiteHi+c+prompt+Reset)
+	fmt.Fprint(Output(), WhiteHi+c+prompt+Reset)
 	if Continue() {
-		fmt.Fprint(os.Stdout, BgCyan+CyanHi+" Yes"+Reset)
+		fmt.Fprint(Output(), BgCyan+CyanHi+" Yes"+Reset)
 	} else {
-		fmt.Fprint(os.Stdout, BgCyan+CyanHi+" No"+Reset)
+		fmt.Fprint(Output(), BgCyan+CyanHi+" No"+Reset)
 	}
 	time.Sleep(1 * time.Second)
 }
@@ -119,7 +124,7 @@ func (u User) absCenterArt(art string, artW int, artH int) {
 	// Every line is positioned explicitly, so no trailing newline: one after
 	// the bottom row of full-height art would scroll its first line away.
 	for s.Scan() {
-		fmt.Fprint(os.Stdout, cursorTo(artX, artY)+s.Text())
+		fmt.Fprint(Output(), cursorTo(artX, artY)+s.Text())
 		artY++
 	}
 }

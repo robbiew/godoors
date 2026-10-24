@@ -15,7 +15,7 @@ var Idle int
 // can reclaim the node — but callers may override it to run their own cleanup,
 // logging, or a non-terminating handler.
 var IdleAction = func() {
-	fmt.Println("\r\nYou've been idle for too long... exiting!")
+	fmt.Fprintln(Output(), "\r\nYou've been idle for too long... exiting!")
 	time.Sleep(1 * time.Second)
 	os.Exit(0)
 }
@@ -65,6 +65,6 @@ func NewTimer(seconds int, action func()) *time.Timer {
 func Pause() {
 	defer startIdleTimer()()
 
-	fmt.Fprint(os.Stdout, "\r\nPrEsS a KeY")
+	fmt.Fprint(Output(), "\r\nPrEsS a KeY")
 	_, _, _ = GetKey()
 }

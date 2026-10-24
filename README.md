@@ -1,6 +1,6 @@
 # :computer: GoDoors
 
-Helpful library for creating door applications (like games and utilities) for BBSs that utilize STDIN and STDOUT — on Linux and macOS, and runnable locally in a Windows console for development — when connected over a terminal program like [SyncTerm](https://syncterm.bbsdev.net/), [MagiTerm](https://gitlab.com/magickabbs/MagiTerm), [NetRunner](http://mysticbbs.com/downloads.html) or [IGTerm](https://www.phenomprod.com/).
+Helpful library for creating door applications (like games and utilities) for BBSs that utilize STDIN and STDOUT — on Linux, macOS, and current Windows (including inherited Door32 BBS sockets) — when connected over a terminal program like [SyncTerm](https://syncterm.bbsdev.net/), [MagiTerm](https://gitlab.com/magickabbs/MagiTerm), [NetRunner](http://mysticbbs.com/downloads.html) or [IGTerm](https://www.phenomprod.com/).
 
 ----
 
@@ -42,6 +42,61 @@ gd.Initialize(path string) (gd.User, error)
 
 ***
  
+## WINDOWS BBS DOORS AND SESSION I/O
+
+`Initialize` selects the connection before probing the caller's terminal. On
+Windows, Door32 communication type `2` uses the inherited socket handle from
+line 2 of `door32.sys`. Type `0` uses local stdin/stdout; Windows serial/type `1`
+is unsupported and returns an error. On Linux and macOS, standard I/O remains
+the transport, including when the drop file describes a telnet connection.
+
+```go
+func runDoor() error {
+    u, err := gd.Initialize(dropDirectory)
+    if err != nil {
+        return err
+    }
+    defer gd.CloseSession()
+    if err := gd.OpenInput(); err != nil {
+        return err
+    }
+    fmt.Fprintf(gd.Output(), "Hello, %s!\r\n", u.Alias)
+    gd.Pause()
+    return nil
+}
+```
+
+All GoDoors drawing, prompt, music, and keyboard functions use the active
+connection. Use `gd.Output()` for your application's own text too: `fmt.Print`
+still goes to the process's local stdout. Raw CP437 bytes are passed through
+unchanged. No stdout replacement, TCP reconnection, or telnet negotiation is
+performed; the BBS must pass a usable connected socket and hand off the stream.
+
+`gd.ReadDropFile(directory)` additionally exposes `CommType` and `Handle` without
+opening a connection. The handle is a process-local inherited handle, not a port
+number. The existing `DropFileData` metadata-only signature is unchanged.
+
+There is one active session per process. Initialize it before reading keys or
+starting other I/O, and close it after those operations finish. Call
+`gd.CloseSession()` before another socket initialization or before `os.Exit`
+(which skips deferred cleanup). `CloseInput` remains available for restoring local
+raw mode; `CloseSession` also releases the child's socket handle. Neither shuts
+down the parent's BBS connection. Retain no old `Output()` writer across sessions.
+
+The socket adapter uses nonblocking Winsock I/O so closing it cancels pending
+reads/writes without shutting down the shared connection. Nonblocking mode can
+also affect the parent's socket; the BBS must support resuming in that mode.
+Terminal probes retain their bounded wait; socket writes wait for progress or
+session closure. The adapter exposes `io.ReadWriteCloser`, not `net.Conn` with
+unimplemented deadlines. Existing drawing helpers retain their void signatures;
+use the writer directly when your application needs to handle output errors.
+
+Windows 10 / Server 2016 or later is required by the Go 1.21 baseline. Windows 7
+is out of scope. Windows socket tests include a real inherited-handle subprocess,
+large binary output, disconnects, and cancellation; they require native Windows
+execution. Cross-compilation alone does not establish BBS compatibility.
+
+***
 ## GET TERMINAL HEIGHT AND WIDTH
 ```go
 gd.GetTermSize() (int, int)

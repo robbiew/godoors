@@ -1,6 +1,6 @@
-// Package godoors is a helper library for building Linux-based BBS door
+// Package godoors is a helper library for building BBS door
 // programs (games and utilities) that talk to a caller over STDIN/STDOUT
-// through a terminal such as SyncTerm, MagiTerm, NetRunner or IGTerm.
+// or an inherited Windows socket, through a terminal such as SyncTerm, MagiTerm, NetRunner or IGTerm.
 //
 // It covers the common door chores: reading a door32.sys drop file, detecting
 // the terminal size, drawing SAUCE-stripped ANSI art, positioning the cursor,

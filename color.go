@@ -98,9 +98,9 @@ func PrintPipeColor(text string, defaultTint string) string {
 	for i, ansiBlock := range coloredSections {
 		if len(strings.Trim(ansiBlock, " ")) < 2 {
 			if i == 0 {
-				fmt.Print(tint, ansiBlock, Reset)
+				fmt.Fprint(Output(), tint, ansiBlock, Reset)
 			} else {
-				fmt.Print(tint, "|", ansiBlock, Reset)
+				fmt.Fprint(Output(), tint, "|", ansiBlock, Reset)
 			}
 		} else {
 			newTint, isColor := PipeColorToEscCode(ansiBlock[0:2])
@@ -108,13 +108,13 @@ func PrintPipeColor(text string, defaultTint string) string {
 			if isColor {
 				// Change the tint and then print the following block
 				tint = newTint
-				fmt.Print(tint, ansiBlock[2:], Reset)
+				fmt.Fprint(Output(), tint, ansiBlock[2:], Reset)
 			} else {
 				// Print the pipe if a color was not found
 				if i == 0 {
-					fmt.Print(tint, ansiBlock, Reset)
+					fmt.Fprint(Output(), tint, ansiBlock, Reset)
 				} else {
-					fmt.Print(tint, "|", ansiBlock, Reset)
+					fmt.Fprint(Output(), tint, "|", ansiBlock, Reset)
 				}
 			}
 		}

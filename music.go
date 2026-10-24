@@ -2,7 +2,6 @@ package godoors
 
 import (
 	"fmt"
-	"os"
 	"strings"
 )
 
@@ -48,5 +47,5 @@ func MusicSequence(tune string) string {
 
 // PlayMusic sends a tune to the terminal as ANSI music.
 func PlayMusic(tune string) {
-	fmt.Fprint(os.Stdout, MusicSequence(tune))
+	fmt.Fprint(Output(), MusicSequence(tune))
 }
