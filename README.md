@@ -1,6 +1,6 @@
 # :computer: GoDoors
 
-Helpful library for creating door applications (like games and utilities) for BBSs that utilize STDIN and STDOUT — on Linux, macOS, and current Windows (including inherited Door32 BBS sockets) — when connected over a terminal program like [SyncTerm](https://syncterm.bbsdev.net/), [MagiTerm](https://gitlab.com/magickabbs/MagiTerm), [NetRunner](http://mysticbbs.com/downloads.html) or [IGTerm](https://www.phenomprod.com/).
+Helpful library for creating door applications (like games and utilities) for BBSs on Linux and macOS through STDIN/STDOUT, and on current Windows through local standard I/O or inherited Door32 BBS sockets — when connected over a terminal program like [SyncTerm](https://syncterm.bbsdev.net/), [MagiTerm](https://gitlab.com/magickabbs/MagiTerm), [NetRunner](http://mysticbbs.com/downloads.html) or [IGTerm](https://www.phenomprod.com/).
 
 ----
 
@@ -38,7 +38,7 @@ if err != nil {
 gd.Initialize(path string) (gd.User, error)
 ```
 
-> :point_up: Convenience wrapper: reads the drop file **and** probes the terminal in one call, returning a populated `User` (Alias, TimeLeft, Emulation, NodeNum, H, W, ModalH, ModalW, CTerm). `CTerm` is true when the caller's terminal identifies as SyncTERM/CTerm (see [ANSI MUSIC](#ansi-music)). Returns an `error` if the drop file can't be read or parsed.
+> :point_up: Convenience wrapper: reads the drop file **and** probes the terminal in one call, returning a populated `User` (Alias, TimeLeft, Emulation, NodeNum, H, W, ModalH, ModalW, CTerm). `CTerm` is true when the caller's terminal identifies as SyncTERM/CTerm (see [ANSI MUSIC](#ansi-music)). Returns an `error` if the drop file can't be read or parsed, or the Windows connection can't be opened. After a successful call, use `defer gd.CloseSession()` to release the connection and restore local input mode.
 
 ***
  
@@ -51,7 +51,7 @@ is unsupported and returns an error. On Linux and macOS, standard I/O remains
 the transport, including when the drop file describes a telnet connection.
 
 ```go
-func runDoor() error {
+func runDoor(dropDirectory string) error {
     u, err := gd.Initialize(dropDirectory)
     if err != nil {
         return err
@@ -60,7 +60,9 @@ func runDoor() error {
     if err := gd.OpenInput(); err != nil {
         return err
     }
-    fmt.Fprintf(gd.Output(), "Hello, %s!\r\n", u.Alias)
+    if _, err := fmt.Fprintf(gd.Output(), "Hello, %s!\r\n", u.Alias); err != nil {
+        return err
+    }
     gd.Pause()
     return nil
 }
@@ -94,7 +96,10 @@ use the writer directly when your application needs to handle output errors.
 Windows 10 / Server 2016 or later is required by the Go 1.21 baseline. Windows 7
 is out of scope. Windows socket tests include a real inherited-handle subprocess,
 large binary output, disconnects, and cancellation; they require native Windows
-execution. Cross-compilation alone does not establish BBS compatibility.
+execution. CI runs the full suite on Linux and macOS, Windows amd64 with race
+detection, and Windows 386. The Windows suites include checks that the parent can
+reuse the connection after the child exits. Live acceptance under the target BBS
+is still required; cross-compilation alone does not establish BBS compatibility.
 
 ***
 ## GET TERMINAL HEIGHT AND WIDTH
@@ -154,7 +159,7 @@ var (
 	gd.Block       
 )
 ```
-> :point_up: Variables for printing individual CP437 symbols on the fly, e.g. fmt.Println(SYMBOL) or whatever. (TO-DO: add more!)
+> :point_up: Variables for printing individual CP437 symbols on the fly, e.g. `fmt.Fprintln(gd.Output(), gd.Heart)`. (TO-DO: add more!)
 
 ***
 ## DISPLAY SOMETHING AT X,Y COORDINATES
@@ -190,6 +195,7 @@ u, err := gd.Initialize("./")
 if err != nil {
 	// handle error
 } else {
+	defer gd.CloseSession()
 	u.Modal(art, text)
 }
 ```
@@ -204,6 +210,7 @@ u, err := gd.Initialize("./")
 if err != nil {
 	// handle error
 } else {
+	defer gd.CloseSession()
 	u.AbsCenterText(s, c) // method on User; appends "Continue? Y/n" and blocks
 	u.AbsCenterArt(art)   // method on User
 }
@@ -247,7 +254,7 @@ gd.CursorHide()
 ## Color
 ```go
 // Text colors supported by BBS term programs
-// usage: fmt.Println(gd.Yellow)
+// usage: fmt.Fprint(gd.Output(), gd.Yellow)
 gd.Black         
 gd.Red          
 gd.Green         
@@ -290,7 +297,7 @@ gd.Reset
 ## FONTS
 ```go
 // Supported by SyncTerm
-// usage: fmt.Println(gd.Topaz)
+// usage: fmt.Fprint(gd.Output(), gd.Topaz)
 gd.Mosoul        
 gd.Potnoodle     
 gd.Microknight    
