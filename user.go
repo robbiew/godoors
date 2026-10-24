@@ -1,11 +1,8 @@
 package godoors
 
 import (
-	"bufio"
 	"fmt"
-	"strings"
 	"time"
-	"unicode/utf8"
 )
 
 // User holds the per-session state parsed from the drop file plus the detected
@@ -63,14 +60,13 @@ func Initialize(path string) (User, error) {
 }
 
 func artDimensions(art string) (int, int) {
-	noSauce := TrimStringFromSauce(art)
-	s := bufio.NewScanner(strings.NewReader(noSauce))
+	s := artScanner(art)
 
 	width := 0
 	height := 0
 	for s.Scan() {
 		height++
-		if lineWidth := utf8.RuneCountInString(s.Text()); lineWidth > width {
+		if lineWidth := textWidth(s.Text()); lineWidth > width {
 			width = lineWidth
 		}
 	}
@@ -93,7 +89,7 @@ func (u User) Modal(art string, text string) {
 func (u User) AbsCenterText(s string, c string) {
 	prompt := s + " Continue? Y/n"
 	centerY := u.ModalH / 2
-	centerX := (u.ModalW-utf8.RuneCountInString(prompt))/2 + 1 // 1-based column
+	centerX := (u.ModalW-textWidth(prompt))/2 + 1 // 1-based column
 	MoveCursor(centerX, centerY)
 	fmt.Fprint(Output(), WhiteHi+c+prompt+Reset)
 	if Continue() {
@@ -118,8 +114,7 @@ func (u User) absCenterArt(art string, artW int, artH int) {
 	artY := (u.ModalH-artH)/2 + 1
 	artX := (u.ModalW-artW)/2 + 1
 
-	noSauce := TrimStringFromSauce(art) // strip off the SAUCE metadata
-	s := bufio.NewScanner(strings.NewReader(noSauce))
+	s := artScanner(art)
 
 	// Every line is positioned explicitly, so no trailing newline: one after
 	// the bottom row of full-height art would scroll its first line away.

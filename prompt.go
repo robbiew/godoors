@@ -29,6 +29,7 @@ func idleExit(exit func(int)) {
 	}
 	timer.Stop()
 	lifecycleMu.Lock()
+	CloseInput()
 	_ = closeConnection()
 	lifecycleMu.Unlock()
 	exit(0)
