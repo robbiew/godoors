@@ -46,7 +46,9 @@ gd.Initialize(path string) (gd.User, error)
 
 `Initialize` selects the connection before probing the caller's terminal. On
 Windows, Door32 communication type `2` uses the inherited socket handle from
-line 2 of `door32.sys`. Type `0` uses local stdin/stdout; Windows serial/type `1`
+line 2 of `door32.sys`. A zero or non-socket handle keeps the existing
+stdin/stdout transport for hosts that redirect standard I/O. Other socket errors
+are returned. Type `0` uses local stdin/stdout; Windows serial/type `1`
 is unsupported and returns an error. On Linux and macOS, standard I/O remains
 the transport, including when the drop file describes a telnet connection.
 
@@ -85,13 +87,17 @@ starting other I/O, and close it after those operations finish. Call
 raw mode; `CloseSession` also releases the child's socket handle. Neither shuts
 down the parent's BBS connection. Retain no old `Output()` writer across sessions.
 
-The socket adapter uses nonblocking Winsock I/O so closing it cancels pending
-reads/writes without shutting down the shared connection. Nonblocking mode can
-also affect the parent's socket; the BBS must support resuming in that mode.
-Terminal probes retain their bounded wait; socket writes wait for progress or
-session closure. The adapter exposes `io.ReadWriteCloser`, not `net.Conn` with
-unimplemented deadlines. Existing drawing helpers retain their void signatures;
-use the writer directly when your application needs to handle output errors.
+The socket adapter uses a private overlapped Winsock descriptor and event waits.
+It preserves the parent's blocking mode and event registrations, and cancellation
+applies only to the door's pending operations. Failed socket closes retain the
+connection so `CloseSession` can be retried. Terminal probes retain their bounded
+wait; socket writes wait for progress or session closure. Existing drawing helpers
+retain their void signatures; use the writer directly to handle output errors.
+
+Initialize a socket session before reading or probing standard input. If a local
+stdin pump has already read input, socket initialization returns an error without
+replacing the pump or discarding its buffered keys. `OpenInput` alone can precede
+initialization because it does not start a read.
 
 Windows 10 / Server 2016 or later is required by the Go 1.21 baseline. Windows 7
 is out of scope. Windows socket tests include a real inherited-handle subprocess,

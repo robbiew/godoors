@@ -15,6 +15,7 @@ import (
 	"syscall"
 	"testing"
 	"time"
+	"unsafe"
 
 	"golang.org/x/sys/windows"
 )
@@ -119,7 +120,7 @@ func TestWindowsSocketCloseCancelsRead(t *testing.T) {
 }
 
 func TestWindowsSocketRejectsInvalidTransport(t *testing.T) {
-	for _, info := range []DropFile{{CommType: 1}, {CommType: 2}, {CommType: 2, Handle: ^uintptr(0)}} {
+	for _, info := range []DropFile{{CommType: 1}, {CommType: 2, Handle: ^uintptr(0)}} {
 		if _, err := platformConnection(info); err == nil {
 			t.Fatalf("accepted %+v", info)
 		}
@@ -164,7 +165,7 @@ func TestWindowsInheritedSocketChild(t *testing.T) {
 
 func TestWindowsInheritedSocketReturnsToParent(t *testing.T) {
 	conn, peer := socketPair(t)
-	h := conn.(*windowsSocket).handle
+	h := conn.(*windowsSocket).inherited
 	if err := windows.SetHandleInformation(h, windows.HANDLE_FLAG_INHERIT, windows.HANDLE_FLAG_INHERIT); err != nil {
 		t.Fatal(err)
 	}
@@ -189,6 +190,7 @@ func TestWindowsInheritedSocketReturnsToParent(t *testing.T) {
 	if _, err := io.ReadFull(peer, b); err != nil || string(b) != "parent" {
 		t.Fatalf("parent output %q: %v", b, err)
 	}
+	assertBlockingRead(t, h, peer)
 }
 
 func TestWindowsSocketCloseCancelsBlockedWrite(t *testing.T) {
@@ -197,6 +199,13 @@ func TestWindowsSocketCloseCancelsBlockedWrite(t *testing.T) {
 		t.Fatal(err)
 	}
 	h := conn.(*windowsSocket).handle
+	// Exercise cancellation with a socket that the host already made nonblocking.
+	// This test-only setup must not be needed or performed by the adapter.
+	mode := uint32(1)
+	ioctl := windows.NewLazySystemDLL("ws2_32.dll").NewProc("ioctlsocket")
+	if ret, _, err := ioctl.Call(uintptr(h), 0x8004667e, uintptr(unsafe.Pointer(&mode))); ret != 0 {
+		t.Fatal(err)
+	}
 	if err := windows.SetsockoptInt(h, windows.SOL_SOCKET, windows.SO_SNDBUF, 1024); err != nil {
 		t.Fatal(err)
 	}
@@ -246,5 +255,101 @@ func TestWindowsSocketCloseCancelsBlockedWrite(t *testing.T) {
 		}
 	case <-time.After(time.Second):
 		t.Fatal("close did not cancel write")
+	}
+}
+
+func TestWindowsStdioFallback(t *testing.T) {
+	conn, err := platformConnection(DropFile{CommType: 2})
+	if err != nil || conn != nil {
+		t.Fatalf("zero handle fallback: %v %v", conn, err)
+	}
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Close()
+	defer w.Close()
+	conn, err = platformConnection(DropFile{CommType: 2, Handle: r.Fd()})
+	if err != nil || conn != nil {
+		t.Fatalf("pipe handle fallback: %v %v", conn, err)
+	}
+}
+
+func TestWindowsSocketCloseRetry(t *testing.T) {
+	conn, _ := socketPair(t)
+	s := conn.(*windowsSocket)
+	attempts := 0
+	s.closeHandle = func(h windows.Handle) error {
+		attempts++
+		if attempts == 1 {
+			return windows.WSAEWOULDBLOCK
+		}
+		return windows.Closesocket(h)
+	}
+	if err := s.Close(); err != windows.WSAEWOULDBLOCK {
+		t.Fatalf("first close: %v", err)
+	}
+	if s.closed || s.handle == windows.InvalidHandle {
+		t.Fatal("lost retryable descriptor")
+	}
+	if err := s.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if attempts != 3 {
+		t.Fatalf("close calls: %d", attempts)
+	}
+}
+
+func TestWindowsSocketPreservesBlockingMode(t *testing.T) {
+	conn, peer := socketPair(t)
+	assertBlockingRead(t, conn.(*windowsSocket).inherited, peer)
+}
+
+func assertBlockingRead(t *testing.T, h windows.Handle, peer net.Conn) {
+	t.Helper()
+
+	// Raw non-overlapped recv must wait for input instead of WSAEWOULDBLOCK.
+	done := make(chan error, 1)
+	go func() {
+		b := []byte{0}
+		buf := windows.WSABuf{Len: 1, Buf: &b[0]}
+		var n, flags uint32
+		err := windows.WSARecv(h, &buf, 1, &n, &flags, nil, nil)
+		if err == nil && (n != 1 || b[0] != 'x') {
+			err = fmt.Errorf("bad raw read: %d %q", n, b)
+		}
+		done <- err
+	}()
+	select {
+	case err := <-done:
+		t.Fatalf("blocking read returned before input: %v", err)
+	case <-time.After(25 * time.Millisecond):
+	}
+	peer.Write([]byte("x"))
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatal(err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("raw read stalled")
+	}
+}
+
+func TestWindowsSocketInitializationPreservesExistingInput(t *testing.T) {
+	conn, _ := socketPair(t)
+	pw := fakeStdin(t)
+	go pw.Write([]byte("ab"))
+	ch, _, err := GetKey()
+	if err != nil || ch != 'a' {
+		t.Fatalf("first key: %q %v", ch, err)
+	}
+	next, err := platformConnection(DropFile{CommType: 2, Handle: uintptr(conn.(*windowsSocket).inherited)})
+	if err == nil || next != nil {
+		t.Fatalf("expected guarded transition, got %v %v", next, err)
+	}
+	ch, _, err = GetKey()
+	if err != nil || ch != 'b' {
+		t.Fatalf("lost buffered key: %q %v", ch, err)
 	}
 }

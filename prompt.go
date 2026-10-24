@@ -14,10 +14,24 @@ var Idle int
 // defaults to the usual door behavior — print a notice and exit, so the BBS
 // can reclaim the node — but callers may override it to run their own cleanup,
 // logging, or a non-terminating handler.
-var IdleAction = func() {
-	fmt.Fprintln(Output(), "\r\nYou've been idle for too long... exiting!")
-	time.Sleep(1 * time.Second)
-	os.Exit(0)
+var IdleAction = func() { idleExit(os.Exit) }
+
+func idleExit(exit func(int)) {
+	// A stalled writer must not prevent the node from being reclaimed. Take a
+	// snapshot so the notice can never be redirected to a later session.
+	out := Output()
+	done := make(chan struct{})
+	go func() { fmt.Fprintln(out, "\r\nYou've been idle for too long... exiting!"); close(done) }()
+	timer := time.NewTimer(100 * time.Millisecond)
+	select {
+	case <-done:
+	case <-timer.C:
+	}
+	timer.Stop()
+	lifecycleMu.Lock()
+	_ = closeConnection()
+	lifecycleMu.Unlock()
+	exit(0)
 }
 
 // startIdleTimer arms the idle timer when Idle is configured (> 0), returning a

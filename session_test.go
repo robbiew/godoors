@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -126,5 +127,83 @@ func TestReadDropFileTransport(t *testing.T) {
 				t.Fatal(err)
 			}
 		})
+	}
+}
+
+type retryCloseConnection struct{ attempts int }
+
+func (c *retryCloseConnection) Read(p []byte) (int, error)  { return 0, io.EOF }
+func (c *retryCloseConnection) Write(p []byte) (int, error) { return len(p), nil }
+func (c *retryCloseConnection) Close() error {
+	c.attempts++
+	if c.attempts == 1 {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func TestCloseSessionRetainsFailedConnection(t *testing.T) {
+	c := &retryCloseConnection{}
+	activeConnection = c
+	t.Cleanup(func() { CloseSession() })
+	if err := CloseSession(); err != io.ErrUnexpectedEOF {
+		t.Fatalf("got %v", err)
+	}
+	if Output() != c {
+		t.Fatal("failed close lost connection")
+	}
+	if err := CloseSession(); err != nil {
+		t.Fatal(err)
+	}
+	if c.attempts != 2 || remoteSession() {
+		t.Fatal("close was not retried")
+	}
+}
+
+func TestOutputConcurrentWithClose(t *testing.T) {
+	// Use an EOF-only connection whose close has no shared test state.
+	activeConnection = &concurrentTestConnection{}
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		for i := 0; i < 10000; i++ {
+			_ = Output()
+			_ = remoteSession()
+			_ = sessionInput()
+		}
+	}()
+	if err := CloseSession(); err != nil {
+		t.Fatal(err)
+	}
+	<-done
+}
+
+type concurrentTestConnection struct{}
+
+func (*concurrentTestConnection) Read(p []byte) (int, error)  { return 0, io.EOF }
+func (*concurrentTestConnection) Write(p []byte) (int, error) { return len(p), nil }
+func (*concurrentTestConnection) Close() error                { return nil }
+
+type stalledOutput struct {
+	done chan struct{}
+	once sync.Once
+}
+
+func (c *stalledOutput) Read(p []byte) (int, error)  { <-c.done; return 0, io.EOF }
+func (c *stalledOutput) Write(p []byte) (int, error) { <-c.done; return 0, io.ErrClosedPipe }
+func (c *stalledOutput) Close() error                { c.once.Do(func() { close(c.done) }); return nil }
+func TestIdleExitDoesNotWaitForStalledOutput(t *testing.T) {
+	c := &stalledOutput{done: make(chan struct{})}
+	activeConnection = c
+	t.Cleanup(func() { CloseSession() })
+	done := make(chan struct{})
+	go idleExit(func(code int) { close(done) })
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("idle exit stalled")
+	}
+	if remoteSession() {
+		t.Fatal("idle exit did not close socket")
 	}
 }

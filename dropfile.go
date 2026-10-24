@@ -116,5 +116,5 @@ func ReadDropFile(path string) (DropFile, error) {
 	if err != nil {
 		return DropFile{}, fmt.Errorf("invalid communication handle: %w", err)
 	}
-	return DropFile{alias, left, emulation, node, kind, uintptr(handle)}, nil
+	return DropFile{Alias: alias, TimeLeft: left, Emulation: emulation, Node: node, CommType: kind, Handle: uintptr(handle)}, nil
 }
