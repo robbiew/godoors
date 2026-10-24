@@ -11,6 +11,7 @@ package godoors
 import (
 	"bufio"
 	"os"
+	"sync"
 	"time"
 
 	"golang.org/x/term"
@@ -32,7 +33,9 @@ const (
 var (
 	stdinPump   *pumpReader
 	stdinReader *bufio.Reader
-	rawState    *term.State // non-nil while OpenInput holds a local terminal in raw mode
+	rawState    *term.State   // non-nil while OpenInput holds a local terminal in raw mode
+	rawMu       sync.Mutex    // also guards restoration by the idle callback
+	crReader    *bufio.Reader // suppress one LF after CR on the same input stream
 )
 
 // inputReader returns the one buffered reader over stdin. Everything that
@@ -84,6 +87,8 @@ func (r *replayReader) Read(b []byte) (int, error) {
 // Input already buffered (e.g. keys typed while Initialize probed the
 // terminal size) is kept.
 func OpenInput() error {
+	rawMu.Lock()
+	defer rawMu.Unlock()
 	prepareConsole()
 	inputReader()
 	fd := int(os.Stdin.Fd())
@@ -100,6 +105,8 @@ func OpenInput() error {
 
 // CloseInput restores the local terminal if OpenInput put it in raw mode.
 func CloseInput() {
+	rawMu.Lock()
+	defer rawMu.Unlock()
 	if rawState != nil {
 		_ = term.Restore(int(os.Stdin.Fd()), rawState)
 		rawState = nil
@@ -110,6 +117,8 @@ func CloseInput() {
 // buffering, no echo), so replies to terminal queries arrive at once and
 // don't print. Pipes, sockets and an already-raw terminal are left as is.
 func withRawInput(fn func()) {
+	rawMu.Lock()
+	defer rawMu.Unlock()
 	fd := int(os.Stdin.Fd())
 	if !remoteSession() && rawState == nil && term.IsTerminal(fd) {
 		if st, err := term.MakeRaw(fd); err == nil {
@@ -133,9 +142,8 @@ func GetKey() (rune, Key, error) {
 	}
 }
 
-// escWait is how long an ESC with nothing buffered behind it waits for the
-// rest of an escape sequence that arrived in a separate read, before it
-// counts as the Esc key.
+// escWait bounds the entire continuation of an ESC sequence, including
+// sequences split after the CSI/SS3 introducer. An incomplete sequence is Esc.
 var escWait = 30 * time.Millisecond
 
 // decodeKey reads one logical keypress from r. A lone ESC is the Esc key;
@@ -144,32 +152,30 @@ var escWait = 30 * time.Millisecond
 // into the game as keys.
 func decodeKey(r *bufio.Reader) (rune, Key, error) {
 	b, err := r.ReadByte()
+	if crReader == r && err == nil && b == '\n' {
+		b, err = r.ReadByte()
+	}
+	crReader = nil
 	if err != nil {
 		return 0, KeyNone, err
 	}
 	switch b {
-	case 0x0D, 0x0A:
+	case 0x0D:
+		crReader = r
+		return 0, KeyEnter, nil
+	case 0x0A:
 		return 0, KeyEnter, nil
 	case 0x1B:
-		if r.Buffered() == 0 && !moreInputSoon(r) {
+		if stdinPump != nil {
+			stdinPump.setDeadline(time.Now().Add(escWait))
+			defer stdinPump.setDeadline(time.Time{})
+		} else if r.Buffered() == 0 {
 			return 0, KeyEsc, nil
 		}
 		return decodeEscSequence(r)
 	default:
 		return rune(b), KeyNone, nil
 	}
-}
-
-// moreInputSoon waits up to escWait for another byte on stdin. Without a
-// stdin pump (tests over fixed readers) there is nothing to wait for.
-func moreInputSoon(r *bufio.Reader) bool {
-	if stdinPump == nil {
-		return false
-	}
-	stdinPump.setDeadline(time.Now().Add(escWait))
-	defer stdinPump.setDeadline(time.Time{})
-	_, err := r.Peek(1)
-	return err == nil
 }
 
 func decodeEscSequence(r *bufio.Reader) (rune, Key, error) {
@@ -186,10 +192,13 @@ func decodeEscSequence(r *bufio.Reader) (rune, Key, error) {
 	// Consume the whole sequence: parameter bytes (0x30-0x3F, which
 	// includes the '?' and '=' of terminal replies) and intermediate bytes
 	// (0x20-0x2F) up to the final byte (0x40-0x7E).
-	for {
+	for n := 0; n < 128; n++ {
 		fb, err := r.ReadByte()
 		if err != nil {
-			return 0, KeyEsc, nil
+			if err == errProbeTimeout {
+				return 0, KeyEsc, nil
+			}
+			return 0, KeyNone, err
 		}
 		if fb >= 0x40 && fb <= 0x7E {
 			switch fb {
@@ -208,4 +217,5 @@ func decodeEscSequence(r *bufio.Reader) (rune, Key, error) {
 			return 0, KeyNone, nil // malformed: stop here
 		}
 	}
+	return 0, KeyEsc, nil // oversized control sequence
 }

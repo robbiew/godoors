@@ -3,10 +3,28 @@ package godoors
 import (
 	"bufio"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 	"unicode/utf8"
 )
+
+// Art is already in memory, so allow a token as large as the entire body
+// plus the byte Scanner needs to detect EOF. Keep ScanLines semantics.
+func artScanner(art string) *bufio.Scanner {
+	art = TrimStringFromSauce(art)
+	s := bufio.NewScanner(strings.NewReader(art))
+	s.Buffer(make([]byte, 4096), max(bufio.MaxScanTokenSize, len(art)+1))
+	return s
+}
+
+var sgrSequence = regexp.MustCompile(`\x1b\[[0-9;:]*m`)
+
+// textWidth ignores SGR color/style controls. Like the existing text helpers,
+// it counts runes, not wide/combining cells or arbitrary ANSI cursor motion.
+func textWidth(s string) int {
+	return utf8.RuneCountInString(sgrSequence.ReplaceAllString(s, ""))
+}
 
 func TruncateText(s string, max int) string {
 	if max <= 0 {
@@ -27,8 +45,7 @@ func TruncateText(s string, max int) string {
 }
 
 func PrintAnsi(artfile string, delay int, height int) {
-	noSauce := TrimStringFromSauce(artfile) // strip off the SAUCE metadata
-	s := bufio.NewScanner(strings.NewReader(string(noSauce)))
+	s := artScanner(artfile)
 
 	i := 1
 
@@ -51,8 +68,7 @@ func PrintAnsi(artfile string, delay int, height int) {
 func PrintAnsiLoc(artfile string, x int, y int) {
 	yLoc := clampCoord(y)
 
-	noSauce := TrimStringFromSauce(artfile) // strip off the SAUCE metadata
-	s := bufio.NewScanner(strings.NewReader(string(noSauce)))
+	s := artScanner(artfile)
 
 	for s.Scan() {
 		fmt.Fprint(Output(), cursorTo(x, yLoc)+s.Text())
@@ -68,5 +84,8 @@ func PrintStringLoc(text string, x int, y int) {
 
 // Horizontally center some text.
 func CenterText(s string, w int) {
-	fmt.Fprintf(Output(), "%[1]*s", -w, fmt.Sprintf("%[1]*s", (w+len(s))/2, s))
+	width := textWidth(s)
+	left := max(0, (w-width)/2)
+	right := max(0, w-width-left)
+	fmt.Fprint(Output(), strings.Repeat(" ", left), s, strings.Repeat(" ", right))
 }

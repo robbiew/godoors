@@ -13,21 +13,17 @@ import (
 	"golang.org/x/term"
 )
 
+var sizeReply = regexp.MustCompile(`^\x1b\[([0-9]+);([0-9]+)R$`)
+
 func parseTermSizeReply(text string) (int, int, bool) {
-	re := regexp.MustCompile(`\d+;\d+`)
-	line := re.FindString(text)
-	if line == "" {
+	parts := sizeReply.FindStringSubmatch(text)
+	if parts == nil {
 		return 0, 0, false
 	}
 
-	parts := strings.Split(line, ";")
-	if len(parts) != 2 {
-		return 0, 0, false
-	}
-
-	h, herr := strconv.Atoi(parts[0])
-	w, werr := strconv.Atoi(parts[1])
-	if herr != nil || werr != nil {
+	h, herr := strconv.Atoi(parts[1])
+	w, werr := strconv.Atoi(parts[2])
+	if herr != nil || werr != nil || h < 1 || w < 1 {
 		return 0, 0, false
 	}
 

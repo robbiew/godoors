@@ -224,6 +224,15 @@ gd.CenterText(s, w) // package function
 ```
 > :point_up: "absolute center" being both vertically and horizontally centered based on the terminal height and width. `AbsCenterText`/`AbsCenterArt` are methods on the `User` from `gd.Initialize`, so they use that session's dimensions, and sizing is measured from the text/art itself (no length argument). `c` is a background color constant. Note `AbsCenterText` appends a "Continue? Y/n" prompt and blocks until the user answers. `AbsCenterArt` takes art contents, not a path.
 
+Centering ignores ANSI SGR color/style codes when measuring width. Other ANSI
+cursor controls, tabs, and Unicode wide/combining characters are not simulated;
+use line-oriented art with one character per cell for automatic centering.
+Art lines are not limited to the default 64 KiB scanner buffer.
+
+Keyboard input is byte-oriented (including raw CP437 bytes). CR, LF, and CRLF
+each represent one Enter key. An incomplete ANSI key sequence times out after
+30 milliseconds and returns Esc; complete CSI/SS3 arrow sequences remain supported.
+
 ***
 
 ## Cursor related
