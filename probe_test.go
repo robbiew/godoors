@@ -13,6 +13,8 @@ import (
 func fakeStdin(t *testing.T) *io.PipeWriter {
 	t.Helper()
 	origPump, origReader := stdinPump, stdinReader
+	originalEscapeReader, originalEscape := pendingEscapeReader, pendingEscape
+	pendingEscapeReader, pendingEscape = nil, nil
 	pr, pw := io.Pipe()
 	stdinPump = newPump(pr)
 	stdinReader = bufio.NewReader(stdinPump)
@@ -22,6 +24,7 @@ func fakeStdin(t *testing.T) *io.PipeWriter {
 	t.Cleanup(func() {
 		pw.Close()
 		stdinPump, stdinReader = origPump, origReader
+		pendingEscapeReader, pendingEscape = originalEscapeReader, originalEscape
 	})
 	return pw
 }

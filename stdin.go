@@ -11,6 +11,9 @@ import (
 // the terminal never answered a query.
 var errProbeTimeout = errors.New("godoors: no reply from terminal")
 
+// ErrInputTimeout indicates that ReadKeyTimeout reached its deadline.
+var ErrInputTimeout = errProbeTimeout
+
 // pumpReader runs stdin reads on a helper goroutine so a read can give up
 // at a deadline (terminal probes) instead of blocking forever. Reads are
 // demand-driven: the goroutine reads stdin only when a caller asks for
@@ -99,4 +102,10 @@ func (p *pumpReader) Read(b []byte) (int, error) {
 	n := copy(b, p.pending)
 	p.pending = p.pending[n:]
 	return n, nil
+}
+
+func (p *pumpReader) getDeadline() time.Time {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.deadline
 }
