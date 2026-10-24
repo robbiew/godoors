@@ -192,16 +192,48 @@ func TestWindowsInheritedSocketReturnsToParent(t *testing.T) {
 }
 
 func TestWindowsSocketCloseCancelsBlockedWrite(t *testing.T) {
-	conn, _ := socketPair(t)
+	conn, peer := socketPair(t)
+	if err := peer.(*net.TCPConn).SetReadBuffer(1024); err != nil {
+		t.Fatal(err)
+	}
 	h := conn.(*windowsSocket).handle
 	if err := windows.SetsockoptInt(h, windows.SOL_SOCKET, windows.SO_SNDBUF, 1024); err != nil {
 		t.Fatal(err)
 	}
+
+	// Windows loopback can accept megabytes in one send despite SO_SNDBUF.
+	// Fill the actual connection until Winsock reports backpressure instead of
+	// assuming that a fixed payload size must block on every runner.
+	payload := make([]byte, 64<<10)
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		buf := windows.WSABuf{Len: uint32(len(payload)), Buf: &payload[0]}
+		var n uint32
+		err := windows.WSASend(h, &buf, 1, &n, 0, nil, nil)
+		if err == windows.WSAEWOULDBLOCK {
+			break
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("socket did not reach backpressure")
+		}
+	}
 	done := make(chan error, 1)
-	go func() { _, err := conn.Write(make([]byte, 8<<20)); done <- err }()
+	go func() {
+		// Keep writing until cancellation, even if Windows frees some buffer
+		// space between the saturation check and this goroutine starting.
+		for {
+			if _, err := conn.Write(payload); err != nil {
+				done <- err
+				return
+			}
+		}
+	}()
 	select {
 	case err := <-done:
-		t.Fatalf("expected backpressure, got %v", err)
+		t.Fatalf("write ended before close: %v", err)
 	case <-time.After(25 * time.Millisecond):
 	}
 	if err := conn.Close(); err != nil {
