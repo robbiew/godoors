@@ -47,8 +47,10 @@ func GetTermSize() (int, int) {
 		defaultW = 80
 	)
 	prepareConsole()
-	if w, h, err := term.GetSize(int(os.Stdout.Fd())); err == nil && w > 0 && h > 0 {
-		return h, w
+	if !remoteSession() {
+		if w, h, err := term.GetSize(int(os.Stdout.Fd())); err == nil && w > 0 && h > 0 {
+			return h, w
+		}
 	}
 	h, w, ok := probeTerminal(true)
 	if !ok {
@@ -103,7 +105,7 @@ func probeTerminalLocked(askSize bool) (h, w int, sizeOK bool) {
 	}
 	var replies []string
 	withRawInput(func() {
-		fmt.Fprint(os.Stdout, query)
+		fmt.Fprint(Output(), query)
 		r := inputReader()
 		if stdinPump != nil {
 			stdinPump.setDeadline(time.Now().Add(probeTimeout))

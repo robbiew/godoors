@@ -37,9 +37,17 @@ func openDropFile(dir string) (*os.File, error) {
 // 1 = ANSI) and node number. Any I/O or parse failure is returned as an error
 // so the caller can decide how to handle it, rather than terminating the host.
 func DropFileData(path string) (alias string, timeLeft, emulation, node int, err error) {
-	file, err := openDropFile(path)
+	text, err := readDropLines(path)
 	if err != nil {
 		return "", 0, 0, 0, err
+	}
+	return parseDropMetadata(text)
+}
+
+func readDropLines(path string) ([]string, error) {
+	file, err := openDropFile(path)
+	if err != nil {
+		return nil, err
 	}
 	defer file.Close()
 
@@ -50,9 +58,13 @@ func DropFileData(path string) (alias string, timeLeft, emulation, node int, err
 		text = append(text, scanner.Text())
 	}
 	if err := scanner.Err(); err != nil {
-		return "", 0, 0, 0, fmt.Errorf("reading drop file: %w", err)
+		return nil, fmt.Errorf("reading drop file: %w", err)
 	}
 
+	return text, nil
+}
+
+func parseDropMetadata(text []string) (alias string, timeLeft, emulation, node int, err error) {
 	// door32.sys is line-oriented; the fields we need live at fixed indexes.
 	const (
 		aliasLine     = 6
@@ -75,4 +87,34 @@ func DropFileData(path string) (alias string, timeLeft, emulation, node int, err
 		return "", 0, 0, 0, fmt.Errorf("parsing node number: %w", err)
 	}
 	return alias, timeLeft, emulation, node, nil
+}
+
+// DropFile holds user metadata and Door32 communication information.
+// Handle is an inherited socket handle, never a TCP port.
+type DropFile struct {
+	Alias                     string
+	TimeLeft, Emulation, Node int
+	CommType                  int
+	Handle                    uintptr
+}
+
+// ReadDropFile reads door32.sys from a directory, including its transport fields.
+func ReadDropFile(path string) (DropFile, error) {
+	text, err := readDropLines(path)
+	if err != nil {
+		return DropFile{}, err
+	}
+	alias, left, emulation, node, err := parseDropMetadata(text)
+	if err != nil {
+		return DropFile{}, err
+	}
+	kind, err := strconv.Atoi(strings.TrimSpace(text[0]))
+	if err != nil || kind < 0 || kind > 2 {
+		return DropFile{}, fmt.Errorf("invalid communication type %q", text[0])
+	}
+	handle, err := strconv.ParseUint(strings.TrimSpace(text[1]), 10, strconv.IntSize)
+	if err != nil {
+		return DropFile{}, fmt.Errorf("invalid communication handle: %w", err)
+	}
+	return DropFile{Alias: alias, TimeLeft: left, Emulation: emulation, Node: node, CommType: kind, Handle: uintptr(handle)}, nil
 }

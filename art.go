@@ -3,7 +3,6 @@ package godoors
 import (
 	"bufio"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -34,10 +33,10 @@ func PrintAnsi(artfile string, delay int, height int) {
 	i := 1
 
 	for s.Scan() {
-		fmt.Fprint(os.Stdout, s.Text())
+		fmt.Fprint(Output(), s.Text())
 		time.Sleep(time.Duration(delay) * time.Millisecond)
 		if i < height {
-			fmt.Fprint(os.Stdout, "\r\n")
+			fmt.Fprint(Output(), "\r\n")
 		} else {
 			MoveCursor(1, 1)
 			break
@@ -56,7 +55,7 @@ func PrintAnsiLoc(artfile string, x int, y int) {
 	s := bufio.NewScanner(strings.NewReader(string(noSauce)))
 
 	for s.Scan() {
-		fmt.Fprint(os.Stdout, cursorTo(x, yLoc)+s.Text())
+		fmt.Fprint(Output(), cursorTo(x, yLoc)+s.Text())
 		yLoc++
 	}
 }
@@ -64,10 +63,10 @@ func PrintAnsiLoc(artfile string, x int, y int) {
 // PrintStringLoc prints text at column x, row y. Coordinates are 1-based
 // ((1, 1) is the top-left cell); values below 1 are clamped to 1.
 func PrintStringLoc(text string, x int, y int) {
-	fmt.Fprint(os.Stdout, cursorTo(x, y)+text)
+	fmt.Fprint(Output(), cursorTo(x, y)+text)
 }
 
 // Horizontally center some text.
 func CenterText(s string, w int) {
-	fmt.Fprintf(os.Stdout, "%[1]*s", -w, fmt.Sprintf("%[1]*s", (w+len(s))/2, s))
+	fmt.Fprintf(Output(), "%[1]*s", -w, fmt.Sprintf("%[1]*s", (w+len(s))/2, s))
 }

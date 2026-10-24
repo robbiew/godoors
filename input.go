@@ -40,7 +40,7 @@ var (
 // reader buffered are never lost to another.
 func inputReader() *bufio.Reader {
 	if stdinReader == nil {
-		stdinPump = newPump(os.Stdin)
+		stdinPump = newPump(sessionInput())
 		stdinReader = bufio.NewReader(stdinPump)
 	}
 	return stdinReader
@@ -87,7 +87,7 @@ func OpenInput() error {
 	prepareConsole()
 	inputReader()
 	fd := int(os.Stdin.Fd())
-	if rawState != nil || !term.IsTerminal(fd) {
+	if remoteSession() || rawState != nil || !term.IsTerminal(fd) {
 		return nil
 	}
 	st, err := term.MakeRaw(fd)
@@ -111,7 +111,7 @@ func CloseInput() {
 // don't print. Pipes, sockets and an already-raw terminal are left as is.
 func withRawInput(fn func()) {
 	fd := int(os.Stdin.Fd())
-	if rawState == nil && term.IsTerminal(fd) {
+	if !remoteSession() && rawState == nil && term.IsTerminal(fd) {
 		if st, err := term.MakeRaw(fd); err == nil {
 			defer term.Restore(fd, st)
 		}
