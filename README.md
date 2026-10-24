@@ -42,6 +42,19 @@ gd.Initialize(path string) (gd.User, error)
 
 ***
  
+## OPTIONAL INITIALIZATION AND EXTENDED KEYS
+
+`gd.OpenSession(directory)` selects the Door32 connection and returns a `DropFile`
+without terminal probes or input reads. Pair it with `defer gd.CloseSession()`.
+Call `gd.GetTermSize()` separately when detection is wanted. `Initialize` keeps
+its existing connection-plus-detection behavior.
+
+`gd.ReadKey()` shares the existing input buffer and returns the same rune/key/error
+triple as `GetKey`, adding PageUp/PageDown, Home/End, Insert/Delete, and F1–F12
+key events. `GetKey` retains its original arrows-only handling of escape sequences.
+Use `gd.ReadKeyTimeout(duration)` for a bounded wait; timeout returns
+`gd.ErrInputTimeout` and preserves later input for the next read.
+
 ## WINDOWS BBS DOORS AND SESSION I/O
 
 `Initialize` selects the connection before probing the caller's terminal. On
