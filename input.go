@@ -49,11 +49,13 @@ const (
 )
 
 var (
-	stdinPump   *pumpReader
-	stdinReader *bufio.Reader
-	rawState    *term.State   // non-nil while OpenInput holds a local terminal in raw mode
-	rawMu       sync.Mutex    // also guards restoration by the idle callback
-	crReader    *bufio.Reader // suppress one LF after CR on the same input stream
+	stdinPump           *pumpReader
+	stdinReader         *bufio.Reader
+	rawState            *term.State   // non-nil while OpenInput holds a local terminal in raw mode
+	rawMu               sync.Mutex    // also guards restoration by the idle callback
+	crReader            *bufio.Reader // suppress one LF after CR on the same input stream
+	pendingEscapeReader *bufio.Reader
+	pendingEscape       []byte
 )
 
 // inputReader returns the one buffered reader over stdin. Everything that
@@ -72,7 +74,15 @@ func unreadInput(b []byte) {
 	if len(b) == 0 {
 		return
 	}
-	stdinReader = bufio.NewReader(&replayReader{pending: b, under: inputReader()})
+	previous := inputReader()
+	stdinReader = bufio.NewReader(&replayReader{pending: b, under: previous})
+	// Replaying probe-time keys changes the wrapper, not the input stream.
+	if pendingEscapeReader == previous {
+		pendingEscapeReader = stdinReader
+	}
+	if crReader == previous {
+		crReader = stdinReader
+	}
 }
 
 // replayReader serves replayed bytes, then the reader underneath. The read
@@ -185,14 +195,29 @@ func decodeKey(r *bufio.Reader) (rune, Key, error) {
 }
 
 func decodeKeyEvent(r *bufio.Reader, extended bool) (rune, Key, error) {
-	b, err := r.ReadByte()
-	if crReader == r && err == nil && b == '\n' {
-		b, err = r.ReadByte()
+	if pendingEscapeReader == r && len(pendingEscape) > 0 {
+		prefix := pendingEscape
+		pendingEscapeReader, pendingEscape = nil, nil
+		return decodeEscSequence(r, extended, prefix)
 	}
-	crReader = nil
+	b, err := r.ReadByte()
 	if err != nil {
+		// A timeout consumed no byte, so a previously returned CR still owns the
+		// next LF. Once a byte is consumed, suppression is resolved exactly once.
+		if err != ErrInputTimeout {
+			crReader = nil
+		}
 		return 0, KeyNone, err
 	}
+	suppressLF := crReader == r && b == '\n'
+	crReader = nil
+	if suppressLF {
+		b, err = r.ReadByte()
+		if err != nil {
+			return 0, KeyNone, err
+		}
+	}
+
 	switch b {
 	case 0x0D:
 		crReader = r
@@ -200,27 +225,59 @@ func decodeKeyEvent(r *bufio.Reader, extended bool) (rune, Key, error) {
 	case 0x0A:
 		return 0, KeyEnter, nil
 	case 0x1B:
-		if stdinPump != nil {
-			previous := stdinPump.getDeadline()
-			deadline := time.Now().Add(escWait)
-			if !previous.IsZero() && previous.Before(deadline) {
-				deadline = previous
-			}
-			stdinPump.setDeadline(deadline)
-			defer stdinPump.setDeadline(previous)
-		} else if r.Buffered() == 0 {
+		if stdinPump == nil && r.Buffered() == 0 {
 			return 0, KeyEsc, nil
 		}
-		return decodeEscSequence(r, extended)
+		return decodeEscSequence(r, extended, []byte{0x1b})
 	default:
 		return rune(b), KeyNone, nil
 	}
 }
 
-func decodeEscSequence(r *bufio.Reader, extended bool) (rune, Key, error) {
-	b, err := r.ReadByte()
+func decodeEscSequence(r *bufio.Reader, extended bool, prefix []byte) (rune, Key, error) {
+	outerLimited := false
+	if stdinPump != nil {
+		previous := stdinPump.getDeadline()
+		deadline := time.Now().Add(escWait)
+		outerLimited = !previous.IsZero() && !previous.After(deadline)
+		if outerLimited {
+			deadline = previous
+		}
+		stdinPump.setDeadline(deadline)
+		defer stdinPump.setDeadline(previous)
+	}
+	// Replay only the incomplete key, keeping the shared buffered reader stable
+	// for terminal probes and CRLF suppression. Limit/validation still apply to
+	// the complete sequence, including its saved prefix.
+	replay := prefix[1:]
+	history := []byte{0x1b}
+	readByte := func() (byte, error) {
+		var b byte
+		var err error
+		if len(replay) > 0 {
+			b = replay[0]
+			replay = replay[1:]
+		} else {
+			b, err = r.ReadByte()
+		}
+		if err == nil {
+			history = append(history, b)
+		}
+		return b, err
+	}
+	readError := func(err error, intro bool) (rune, Key, error) {
+		if err == ErrInputTimeout && outerLimited {
+			pendingEscapeReader, pendingEscape = r, history
+			return 0, KeyNone, ErrInputTimeout
+		}
+		if intro || err == ErrInputTimeout {
+			return 0, KeyEsc, nil
+		}
+		return 0, KeyNone, err
+	}
+	b, err := readByte()
 	if err != nil {
-		return 0, KeyEsc, nil
+		return readError(err, true)
 	}
 	if b != '[' && b != 'O' {
 		// Not a recognized sequence intro; treat as Esc and put the
@@ -233,12 +290,9 @@ func decodeEscSequence(r *bufio.Reader, extended bool) (rune, Key, error) {
 	// (0x20-0x2F) up to the final byte (0x40-0x7E).
 	var sequence []byte
 	for n := 0; n < 128; n++ {
-		fb, err := r.ReadByte()
+		fb, err := readByte()
 		if err != nil {
-			if err == errProbeTimeout {
-				return 0, KeyEsc, nil
-			}
-			return 0, KeyNone, err
+			return readError(err, false)
 		}
 		sequence = append(sequence, fb)
 		if fb >= 0x40 && fb <= 0x7E {
@@ -327,6 +381,7 @@ func extendedKey(intro byte, sequence string) Key {
 
 // ReadKeyTimeout is ReadKey with a bounded wait. Buffered keys are retained and
 // an outstanding transport read remains available for the next call on timeout.
+// Incomplete escape sequences and pending CRLF suppression also survive timeout.
 // Like ReadKey, it must not run concurrently with another input reader/probe.
 func ReadKeyTimeout(timeout time.Duration) (rune, Key, error) {
 	if timeout <= 0 {

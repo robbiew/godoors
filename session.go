@@ -42,6 +42,7 @@ func remoteSession() bool {
 func resetSessionInput() {
 	stdinPump, stdinReader = nil, nil
 	crReader = nil
+	pendingEscapeReader, pendingEscape = nil, nil
 	probeMu.Lock()
 	ctermKnown, ctermDetected = false, false
 	probeMu.Unlock()

@@ -106,3 +106,103 @@ func TestReadKeyTimeoutSurvivesUnknownEscape(t *testing.T) {
 		t.Fatal("escape removed outer deadline")
 	}
 }
+
+func TestTimedReadRetainsSplitEscape(t *testing.T) {
+	for _, prefix := range []string{"\x1b", "\x1b[", "\x1b[5"} {
+		t.Run(prefix, func(t *testing.T) {
+			pw := fakeStdin(t)
+			oldWait := escWait
+			escWait = time.Second
+			t.Cleanup(func() { escWait = oldWait })
+			go pw.Write([]byte(prefix))
+			_, key, err := ReadKeyTimeout(20 * time.Millisecond)
+			if !errors.Is(err, ErrInputTimeout) || key != KeyNone {
+				t.Fatalf("split escape: key=%v err=%v; want timeout", key, err)
+			}
+			if _, key, err := ReadKeyTimeout(10 * time.Millisecond); !errors.Is(err, ErrInputTimeout) || key != KeyNone {
+				t.Fatalf("repeated timeout lost partial sequence: %v %v", key, err)
+			}
+			go pw.Write([]byte("\x1b[5~"[len(prefix):] + "q"))
+			_, key, err = ReadKeyTimeout(time.Second)
+			if err != nil || key != KeyPageUp {
+				t.Fatalf("resumed sequence: key=%v err=%v", key, err)
+			}
+			ch, _, err := ReadKey()
+			if err != nil || ch != 'q' {
+				t.Fatalf("following key: %q %v", ch, err)
+			}
+		})
+	}
+}
+
+func TestTimedReadRetainsCRLFSuppression(t *testing.T) {
+	pw := fakeStdin(t)
+	go pw.Write([]byte("\r"))
+	_, key, err := ReadKey()
+	if err != nil || key != KeyEnter {
+		t.Fatalf("CR: %v %v", key, err)
+	}
+	if _, _, err := ReadKeyTimeout(20 * time.Millisecond); !errors.Is(err, ErrInputTimeout) {
+		t.Fatalf("wait for LF: %v", err)
+	}
+	go pw.Write([]byte("\nq"))
+	ch, key, err := ReadKeyTimeout(time.Second)
+	if err != nil || ch != 'q' || key != KeyNone {
+		t.Fatalf("delayed LF became another Enter: %q %v %v", ch, key, err)
+	}
+}
+
+func TestTimedReadStillRecognizesLoneEsc(t *testing.T) {
+	pw := fakeStdin(t)
+	oldWait := escWait
+	escWait = 10 * time.Millisecond
+	t.Cleanup(func() { escWait = oldWait })
+	go pw.Write([]byte("\x1b"))
+	_, key, err := ReadKeyTimeout(time.Second)
+	if err != nil || key != KeyEsc {
+		t.Fatalf("lone Esc: %v %v", key, err)
+	}
+	go pw.Write([]byte("q"))
+	ch, _, err := ReadKeyTimeout(time.Second)
+	if err != nil || ch != 'q' {
+		t.Fatalf("Esc was replayed: %q %v", ch, err)
+	}
+}
+
+func TestTimedReadResolvesCRLFBeforeNextTimeout(t *testing.T) {
+	pw := fakeStdin(t)
+	go pw.Write([]byte("\r"))
+	if _, key, err := ReadKey(); err != nil || key != KeyEnter {
+		t.Fatalf("CR: %v %v", key, err)
+	}
+	go pw.Write([]byte("\n"))
+	if _, _, err := ReadKeyTimeout(20 * time.Millisecond); !errors.Is(err, ErrInputTimeout) {
+		t.Fatalf("after suppressed LF: %v", err)
+	}
+	go pw.Write([]byte("\n"))
+	_, key, err := ReadKeyTimeout(time.Second)
+	if err != nil || key != KeyEnter {
+		t.Fatalf("independent LF was suppressed: %v %v", key, err)
+	}
+}
+
+func TestTimedReadPartialEscapeSurvivesProbeReplay(t *testing.T) {
+	pw := fakeStdin(t)
+	oldWait := escWait
+	escWait = time.Second
+	t.Cleanup(func() { escWait = oldWait })
+	go pw.Write([]byte("\x1b["))
+	if _, _, err := ReadKeyTimeout(20 * time.Millisecond); !errors.Is(err, ErrInputTimeout) {
+		t.Fatalf("got %v", err)
+	}
+	// Terminal probing replays typed keys by wrapping the same buffered stream.
+	unreadInput([]byte("5~q"))
+	_, key, err := ReadKeyTimeout(time.Second)
+	if err != nil || key != KeyPageUp {
+		t.Fatalf("after replay: %v %v", key, err)
+	}
+	ch, _, err := ReadKey()
+	if err != nil || ch != 'q' {
+		t.Fatalf("following key: %q %v", ch, err)
+	}
+}
