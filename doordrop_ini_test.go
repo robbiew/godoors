@@ -126,3 +126,38 @@ func TestDoorDropINISessionMetadata(t *testing.T) {
 		t.Fatalf("Initialize metadata path: %+v %v", info, err)
 	}
 }
+
+func TestDoor32DirectoryWithINIExtension(t *testing.T) {
+	t.Setenv("DOORDROP_INI", writeINI(t, iniFixture))
+	for _, name := range []string{"node.ini", "Node.INI"} {
+		dir := filepath.Join(t.TempDir(), name)
+		if err := os.Mkdir(dir, 0700); err != nil {
+			t.Fatal(err)
+		}
+		writeFixture(t, dir, "DOOR32.SYS")
+		for _, path := range []string{dir, dir + string(os.PathSeparator)} {
+			t.Run(name+"/"+filepath.Base(path), func(t *testing.T) {
+				info, err := ReadDropFile(path)
+				if err != nil || info.INI != nil || info.Alias != "Alias" {
+					t.Fatalf("ReadDropFile: %+v %v", info, err)
+				}
+				alias, left, emu, node, err := DropFileData(path)
+				if err != nil || alias != "Alias" || left != 58 || emu != 1 || node != 1 {
+					t.Fatalf("DropFileData: %q %d %d %d %v", alias, left, emu, node, err)
+				}
+				info, err = sessionDropFile(path)
+				if err != nil || info.INI != nil || info.Alias != "Alias" {
+					t.Fatalf("Initialize metadata: %+v %v", info, err)
+				}
+				info, err = OpenSession(path)
+				if err != nil {
+					t.Fatal(err)
+				}
+				defer CloseSession()
+				if info.INI != nil || info.Alias != "Alias" {
+					t.Fatalf("OpenSession: %+v", info)
+				}
+			})
+		}
+	}
+}

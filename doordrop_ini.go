@@ -28,6 +28,9 @@ func doorDropPath(path string) string {
 		return os.Getenv("DOORDROP_INI")
 	}
 	if strings.EqualFold(filepath.Ext(path), ".ini") {
+		if info, err := os.Stat(path); err == nil && info.IsDir() {
+			return ""
+		}
 		return path
 	}
 	return ""
