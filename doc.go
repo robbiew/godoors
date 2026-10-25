@@ -2,7 +2,7 @@
 // programs (games and utilities) that talk to a caller over STDIN/STDOUT
 // or an inherited Windows socket, through a terminal such as SyncTerm, MagiTerm, NetRunner or IGTerm.
 //
-// It covers the common door chores: reading a door32.sys drop file, detecting
+// It covers the common door chores: reading Door32 or experimental DOORDROP.INI draft 0.8 input, detecting
 // the terminal size, drawing SAUCE-stripped ANSI art, positioning the cursor,
 // applying pipe/ANSI colors, and simple prompts (pause, yes/no, idle timeout).
 //
@@ -11,7 +11,7 @@
 //	ansi.go     - escape-sequence, color, font and symbol constants
 //	cursor.go   - cursor movement and screen control
 //	terminal.go - terminal size detection
-//	dropfile.go - door32.sys parsing
+//	dropfile.go - dropfile parsing
 //	user.go     - the User type, Initialize, and centered/modal drawing
 //	art.go      - ANSI art and text output
 //	sauce.go    - SAUCE metadata trimming

@@ -103,8 +103,9 @@ func closeConnection() error {
 	return nil
 }
 
-// OpenSession reads Door32 metadata and selects its connection without probing
-// or reading input. path names the directory containing door32.sys. Use this
+// OpenSession reads dropfile metadata and selects its connection without probing
+// or reading input. path names a Door32 directory or an experimental DOORDROP.INI
+// file; an empty path uses DOORDROP_INI. Use this
 // instead of Initialize when terminal detection is optional or deferred.
 // Pair a successful call with CloseSession at door exit.
 func OpenSession(path string) (DropFile, error) {

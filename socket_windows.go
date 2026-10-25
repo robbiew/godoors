@@ -35,7 +35,7 @@ func platformConnection(info DropFile) (io.ReadWriteCloser, error) {
 	if info.CommType == 1 {
 		return nil, fmt.Errorf("godoors: Windows serial doors are not supported")
 	}
-	if info.CommType != 2 || info.Handle == 0 {
+	if info.CommType != 2 || (info.Handle == 0 && info.INI == nil) {
 		return nil, nil
 	}
 	if info.Handle == ^uintptr(0) {
@@ -53,7 +53,7 @@ func platformConnection(info DropFile) (io.ReadWriteCloser, error) {
 	}()
 	h := windows.Handle(info.Handle)
 	if _, err := windows.Getpeername(h); err != nil {
-		if err == windows.WSAENOTSOCK {
+		if err == windows.WSAENOTSOCK && info.INI == nil {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("godoors: inherited socket: %w", err)

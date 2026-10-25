@@ -23,7 +23,7 @@ import (
 gd.DropFileData(path string) (alias string, timeLeft, emulation, node int, err error)
 ```
 
-> :point_up: Pass the path of the folder **containing** a [door32.sys](https://raw.githubusercontent.com/NuSkooler/ansi-bbs/master/docs/dropfile_formats/door32_sys.txt) drop file (a trailing slash is optional). It returns HANDLE/ALIAS, TIME LEFT (in minutes), EMULATION TYPE (0 = ASCII, 1 = ANSI), NODE NUMBER, and an `error`. The filename is matched case-insensitively (`door32.sys`, `DOOR32.SYS`, `Door32.Sys`). Only door32.sys is supported at this time.
+> :point_up: Pass the path of the folder **containing** a [door32.sys](https://raw.githubusercontent.com/NuSkooler/ansi-bbs/master/docs/dropfile_formats/door32_sys.txt) drop file (a trailing slash is optional). It returns HANDLE/ALIAS, TIME LEFT (in minutes), EMULATION TYPE (0 = ASCII, 1 = ANSI), NODE NUMBER, and an `error`. The filename is matched case-insensitively (`door32.sys`, `DOOR32.SYS`, `Door32.Sys`). Experimental DOORDROP.INI draft 0.8 support is also available via an explicit file path (see below).
 
 ```go
 alias, timeLeft, emulation, node, err := gd.DropFileData("./")
@@ -31,6 +31,53 @@ if err != nil {
     log.Fatal(err)
 }
 ```
+
+## EXPERIMENTAL DOORDROP.INI
+
+Support for [DOORDROP.INI draft 0.8](https://github.com/SynchronetBBS/sbbs/blob/master/docs/doordrop_ini.md)
+is **experimental until the specification reaches v1.0**. Draft fields and this
+API may change. This implements a subset for GoDoors' existing byte-oriented I/O.
+
+Pass the exact `.ini` filename to `ReadDropFile`, `DropFileData`, `OpenSession`,
+or `Initialize`. Pass an empty string to use `DOORDROP_INI`. An explicit path
+wins over the environment; existing directory arguments still select Door32.
+GoDoors does not search a directory for DOORDROP.INI or read command-line
+arguments for you.
+
+```go
+info, err := gd.OpenSession(os.Getenv("DOORDROP_INI"))
+if err != nil {
+    log.Fatal(err)
+}
+defer gd.CloseSession()
+if info.INI != nil {
+    userKey := info.INI.Values["USER_KEY"]
+    _ = userKey // use a stable identity for saved progress
+}
+```
+
+`COMM_TYPE=local` and `stdio` are supported on all platforms. Plain `socket`
+uses the inherited socket on Windows, with invalid handles returned as errors.
+POSIX socket descriptors, raw `telnet`, serial, FOSSIL and UART are currently
+unsupported and fail explicitly when opening a session. Reading socket metadata
+does not open or validate the socket. Remote connections must specify
+`COMM_CHARSET=CP437`; UTF-8 file text (`FILE_UTF8=1`) is currently rejected.
+Text remains raw CP437, including alias bytes.
+
+The existing alias, node and emulation fields are populated (`ansi` and `avatar`
+map to ANSI; unknown terminal types map to ASCII). `TIME_LEFT` seconds round up
+to legacy `TimeLeft` minutes. `info.INI.TimeLeftSeconds` preserves exact seconds:
+`nil` means unlimited, and a pointer to zero means expired. Applications must
+enforce this limit themselves, as with Door32 time limits. `INI.Values` exposes
+first-occurrence values, including vendor keys. Unknown keys and lines without
+`=` are ignored; inline `;`, `#`, quotes and `=` remain literal. CRLF, LF and
+DOS Ctrl-Z end-of-file are accepted.
+
+Only fields used by GoDoors are validated. Other values in `INI.Values` are raw:
+applications must apply the draft's defaults and validate any additional keys
+they use. Terminal geometry and CTerm detection still use the existing probes;
+preferences such as `PREF_SOUND`, pause, and idle limits are exposed for the
+application to honor and are not automatically applied by GoDoors helpers.
 
 ## INITIALIZE
 
@@ -44,7 +91,7 @@ gd.Initialize(path string) (gd.User, error)
  
 ## OPTIONAL INITIALIZATION AND EXTENDED KEYS
 
-`gd.OpenSession(directory)` selects the Door32 connection and returns a `DropFile`
+`gd.OpenSession(path)` selects the dropfile connection and returns a `DropFile`
 without terminal probes or input reads. Pair it with `defer gd.CloseSession()`.
 Call `gd.GetTermSize()` separately when detection is wanted. `Initialize` keeps
 its existing connection-plus-detection behavior.
