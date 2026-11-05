@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -63,8 +64,11 @@ func TestOpenSessionDoesNotProbe(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if info.Alias != "Alias" || info.Node != 2 || info.Handle != 1234 {
+		if info.Alias != "Alias" || info.Node != 2 {
 			t.Fatalf("metadata: %+v", info)
+		}
+		if runtime.GOOS == "windows" && info.Handle != 1234 {
+			t.Fatalf("Windows transport handle: %d", info.Handle)
 		}
 	})
 	if out != "" {

@@ -109,7 +109,7 @@ func closeConnection() error {
 // instead of Initialize when terminal detection is optional or deferred.
 // Pair a successful call with CloseSession at door exit.
 func OpenSession(path string) (DropFile, error) {
-	info, err := ReadDropFile(path)
+	info, err := sessionDropFile(path)
 	if err != nil {
 		return DropFile{}, err
 	}

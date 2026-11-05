@@ -109,7 +109,8 @@ Windows, Door32 communication type `2` uses the inherited socket handle from
 line 2 of `door32.sys`. A zero or non-socket handle keeps the existing
 stdin/stdout transport for hosts that redirect standard I/O. Other socket errors
 are returned. Type `0` uses local stdin/stdout; Windows serial/type `1`
-is unsupported and returns an error. On Linux and macOS, standard I/O remains
+is unsupported and returns an error. On Linux and macOS, `OpenSession` ignores unused Door32 transport fields
+(including a `-1` handle) through the platform metadata reader; standard I/O remains
 the transport, including when the drop file describes a telnet connection.
 
 ```go
