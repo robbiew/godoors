@@ -420,3 +420,7 @@ See the [source files](https://github.com/robbiew/godoors) — or run `go doc gi
 - Create a scrollable/selectable list of things
 - ANSI art file manipulation (scroll up/down, left/right)
 - SIXEL support!
+
+## LICENSE
+
+GoDoors is released under the [MIT License](LICENSE).
