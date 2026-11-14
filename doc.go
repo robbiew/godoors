@@ -2,7 +2,7 @@
 // programs (games and utilities) that talk to a caller over STDIN/STDOUT
 // or an inherited Windows socket, through a terminal such as SyncTerm, MagiTerm, NetRunner or IGTerm.
 //
-// It covers the common door chores: reading Door32 or experimental DOORDROP.INI draft 0.8 input, detecting
+// It covers the common door chores: reading Door32 or DOORDROP.INI 1.0 input, detecting
 // the terminal size, drawing SAUCE-stripped ANSI art, positioning the cursor,
 // applying pipe/ANSI colors, and simple prompts (pause, yes/no, idle timeout).
 //

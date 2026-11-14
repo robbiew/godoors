@@ -23,7 +23,7 @@ import (
 gd.DropFileData(path string) (alias string, timeLeft, emulation, node int, err error)
 ```
 
-> :point_up: Pass the path of the folder **containing** a [door32.sys](https://raw.githubusercontent.com/NuSkooler/ansi-bbs/master/docs/dropfile_formats/door32_sys.txt) drop file (a trailing slash is optional). It returns HANDLE/ALIAS, TIME LEFT (in minutes), EMULATION TYPE (0 = ASCII, 1 = ANSI), NODE NUMBER, and an `error`. The filename is matched case-insensitively (`door32.sys`, `DOOR32.SYS`, `Door32.Sys`). Experimental DOORDROP.INI draft 0.8 support is also available via an explicit file path (see below).
+> :point_up: Pass the path of the folder **containing** a [door32.sys](https://raw.githubusercontent.com/NuSkooler/ansi-bbs/master/docs/dropfile_formats/door32_sys.txt) drop file (a trailing slash is optional). It returns HANDLE/ALIAS, TIME LEFT (in minutes), EMULATION TYPE (0 = ASCII, 1 = ANSI), NODE NUMBER, and an `error`. The filename is matched case-insensitively (`door32.sys`, `DOOR32.SYS`, `Door32.Sys`). DOORDROP.INI 1.0 is also supported via an explicit file path (see below).
 
 ```go
 alias, timeLeft, emulation, node, err := gd.DropFileData("./")
@@ -32,11 +32,11 @@ if err != nil {
 }
 ```
 
-## EXPERIMENTAL DOORDROP.INI
+## DOORDROP.INI
 
-Support for [DOORDROP.INI draft 0.8](https://github.com/SynchronetBBS/sbbs/blob/master/docs/doordrop_ini.md)
-is **experimental until the specification reaches v1.0**. Draft fields and this
-API may change. This implements a subset for GoDoors' existing byte-oriented I/O.
+GoDoors reads [DOORDROP.INI version 1.0](https://github.com/SynchronetBBS/sbbs/blob/master/docs/doordrop_ini.md),
+the named-value drop file Synchronet writes. It supports the subset that fits
+GoDoors' byte-oriented CP437 I/O, described below.
 
 Pass the exact `.ini` filename to `ReadDropFile`, `DropFileData`, `OpenSession`,
 or `Initialize`. Pass an empty string to use `DOORDROP_INI`. An explicit path
@@ -53,31 +53,52 @@ defer gd.CloseSession()
 if info.INI != nil {
     userKey := info.INI.Values["USER_KEY"]
     _ = userKey // use a stable identity for saved progress
+    if info.INI.Role == "guest" {
+        // shared unregistered account: don't save progress as one person's
+    }
 }
 ```
 
 `COMM_TYPE=local` and `stdio` are supported on all platforms. Plain `socket`
 uses the inherited socket on Windows, with invalid handles returned as errors.
 POSIX socket descriptors, raw `telnet`, serial, FOSSIL and UART are currently
-unsupported and fail explicitly when opening a session. Reading socket metadata
-does not open or validate the socket. Remote connections must specify
-`COMM_CHARSET=CP437`; UTF-8 file text (`FILE_UTF8=1`) is currently rejected.
-Text remains raw CP437, including alias bytes.
+unsupported and fail explicitly when opening a session, as the specification
+forbids falling back to another type. Reading socket metadata does not open or
+validate the socket. Remote connections must specify `COMM_CHARSET=CP437`. A file
+with UTF-8 text (`FILE_UTF8` true) is rejected, as the specification requires of a
+door that can't decode it: configure the door as CP437 on the BBS. Text remains
+raw CP437, including alias bytes.
+
+Version 1.0 requires `TERM_TYPE`, `TERM_COLS` and `TERM_ROWS` unless `COMM_TYPE`
+is `local`, and GoDoors rejects a remote file without them. `TERM_COLS` and
+`TERM_ROWS` are the size the BBS itself uses for the session, so `Initialize`
+uses them instead of probing the terminal size (a local file without them is
+still probed). They are exposed as `info.INI.Cols` and `info.INI.Rows`;
+`GetTermSize` still probes when called directly.
 
 The existing alias, node and emulation fields are populated (`ansi` and `avatar`
-map to ANSI; unknown terminal types map to ASCII). `TIME_LEFT` seconds round up
-to legacy `TimeLeft` minutes. `info.INI.TimeLeftSeconds` preserves exact seconds:
-`nil` means unlimited, and a pointer to zero means expired. Applications must
-enforce this limit themselves, as with Door32 time limits. `INI.Values` exposes
-first-occurrence values, including vendor keys. Unknown keys and lines without
-`=` are ignored; inline `;`, `#`, quotes and `=` remain literal. CRLF, LF and
-DOS Ctrl-Z end-of-file are accepted.
+map to ANSI; `dumb`, `petscii`, `atascii` and unknown terminal types map to
+ASCII). `info.INI.TermType` holds the token, with unknown values read as `dumb`,
+and `info.INI.Role` holds `USER_ROLE`, with missing or unknown values read as
+`user`. `TIME_LEFT` seconds round up to legacy `TimeLeft` minutes.
+`info.INI.TimeLeftSeconds` preserves exact seconds: `nil` means unlimited, and a
+pointer to zero means expired. Applications must enforce this limit themselves,
+as with Door32 time limits.
 
-Only fields used by GoDoors are validated. Other values in `INI.Values` are raw:
-applications must apply the draft's defaults and validate any additional keys
-they use. Terminal geometry and CTerm detection still use the existing probes;
-preferences such as `PREF_SOUND`, pause, and idle limits are exposed for the
-application to honor and are not automatically applied by GoDoors helpers.
+`info.INI.Bool(key, def)` reads a bool key by the specification's rule (`0` is
+false, any other unsigned decimal is true, missing or malformed returns the
+key's default), such as `info.INI.Bool("PREF_PAUSE", true)`.
+`info.INI.SoundAllowed()` reports `PREF_SOUND`. `PlayMusic` sends nothing when
+the open session has `PREF_SOUND=0`; `MusicSequence` only builds the string, so
+check `SoundAllowed` before writing it yourself, and before sending BEL.
+
+`INI.Values` exposes first-occurrence values, including vendor keys, exactly as
+written. Unknown keys, section headers and lines without `=` are ignored; inline
+`;`, `#`, quotes and `=` remain literal. CRLF, LF and DOS Ctrl-Z end-of-file are
+accepted. Only fields GoDoors uses are validated: applications must apply the
+specification's defaults and validate any other keys they read. Other
+preferences, such as pause, expert mode and idle limits, are left for the
+application to honor.
 
 ## INITIALIZE
 

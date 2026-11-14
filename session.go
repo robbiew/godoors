@@ -11,6 +11,10 @@ import (
 // not run concurrently with input or terminal probes. Output lookup is safe
 // during closure; a previously returned writer may report a closed connection.
 var activeConnection io.ReadWriteCloser
+
+// activeINI is the open session's DOORDROP.INI metadata, nil for Door32 or no
+// session. Guarded by connectionMu.
+var activeINI *DoorDropINI
 var connectionMu sync.RWMutex
 var lifecycleMu sync.Mutex
 
@@ -33,6 +37,12 @@ func sessionInput() io.Reader {
 	}
 	return os.Stdin
 }
+func sessionINI() *DoorDropINI {
+	connectionMu.RLock()
+	defer connectionMu.RUnlock()
+	return activeINI
+}
+
 func remoteSession() bool {
 	connectionMu.RLock()
 	defer connectionMu.RUnlock()
@@ -58,6 +68,9 @@ func connectSession(info DropFile) error {
 	if err != nil {
 		return err
 	}
+	connectionMu.Lock()
+	activeINI = info.INI
+	connectionMu.Unlock()
 	if conn != nil {
 		CloseInput()
 		connectionMu.Lock()
@@ -75,6 +88,9 @@ func CloseSession() error {
 	lifecycleMu.Lock()
 	defer lifecycleMu.Unlock()
 	CloseInput()
+	connectionMu.Lock()
+	activeINI = nil
+	connectionMu.Unlock()
 	if !remoteSession() {
 		return nil
 	}
@@ -104,7 +120,7 @@ func closeConnection() error {
 }
 
 // OpenSession reads dropfile metadata and selects its connection without probing
-// or reading input. path names a Door32 directory or an experimental DOORDROP.INI
+// or reading input. path names a Door32 directory or a DOORDROP.INI 1.0
 // file; an empty path uses DOORDROP_INI. Use this
 // instead of Initialize when terminal detection is optional or deferred.
 // Pair a successful call with CloseSession at door exit.
