@@ -31,7 +31,8 @@ func evenDown(n int) int {
 }
 
 // Initialize reads the drop file at path and probes the terminal (size and
-// whether it is CTerm), returning a populated User. It returns an error if
+// whether it is CTerm), returning a populated User. A DOORDROP.INI session
+// takes its size from TERM_COLS and TERM_ROWS instead of probing it. It returns an error if
 // the drop file can't be read or parsed, or the Windows socket cannot be opened.
 // Pair a successful call with CloseSession at door exit.
 func Initialize(path string) (User, error) {
@@ -44,7 +45,14 @@ func Initialize(path string) (User, error) {
 	}
 	alias, timeLeft, emulation, nodeNum := info.Alias, info.TimeLeft, info.Emulation, info.Node
 
-	h, w := GetTermSize()
+	var h, w int
+	if ini := info.INI; ini != nil && (ini.Values["COMM_TYPE"] != "local" || ini.Values["TERM_COLS"] != "" && ini.Values["TERM_ROWS"] != "") {
+		// DOORDROP.INI 1.0 gives the size the host pages with; use it rather
+		// than probing, so the door lays out screens as the host does.
+		h, w = ini.Rows, ini.Cols
+	} else {
+		h, w = GetTermSize()
+	}
 
 	return User{
 		Alias:     alias,

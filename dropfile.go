@@ -32,8 +32,8 @@ func openDropFile(dir string) (*os.File, error) {
 	return nil, err
 }
 
-// DropFileData reads door32.sys from a directory, or an experimental
-// DOORDROP.INI draft 0.8 file by exact .ini path (empty uses DOORDROP_INI), and
+// DropFileData reads door32.sys from a directory, or a DOORDROP.INI 1.0
+// file by exact .ini path (empty uses DOORDROP_INI), and
 // returns the user's alias, time left (minutes), emulation type (0 = ASCII,
 // 1 = ANSI) and node number. Any I/O or parse failure is returned as an error
 // so the caller can decide how to handle it, rather than terminating the host.
@@ -101,12 +101,12 @@ type DropFile struct {
 	TimeLeft, Emulation, Node int
 	CommType                  int
 	Handle                    uintptr
-	// INI is non-nil for experimental DOORDROP.INI draft 0.8 input.
+	// INI is non-nil for DOORDROP.INI 1.0 input.
 	INI *DoorDropINI
 }
 
 // ReadDropFile reads door32.sys from a directory, including its transport fields.
-// An exact .ini path selects experimental DOORDROP.INI draft 0.8; an empty path
+// An exact .ini path selects DOORDROP.INI 1.0; an empty path
 // uses DOORDROP_INI. Explicit paths take precedence over the environment.
 func ReadDropFile(path string) (DropFile, error) {
 	if iniPath := doorDropPath(path); iniPath != "" {

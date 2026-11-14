@@ -45,7 +45,13 @@ func MusicSequence(tune string) string {
 	return "\x1b[|" + clean + "\x0e\x0f"
 }
 
-// PlayMusic sends a tune to the terminal as ANSI music.
+// PlayMusic sends a tune to the terminal as ANSI music. It sends nothing when
+// the open DOORDROP.INI session has PREF_SOUND=0. MusicSequence does not check
+// the preference; callers writing its result themselves should test
+// DoorDropINI.SoundAllowed.
 func PlayMusic(tune string) {
+	if !sessionINI().SoundAllowed() {
+		return
+	}
 	fmt.Fprint(Output(), MusicSequence(tune))
 }
